@@ -1,8 +1,8 @@
 /*
- * $Id: SDLParseException.java 8672 2008-07-17 16:37:57Z Matthijs $
+ * $Id: DXFParseException.java 8672 2008-07-17 16:37:57Z Matthijs $
  */
 
-package nl.b3p.geotools.data.sdl;
+package nl.b3p.geotools.data.dxf;
 
 import java.io.LineNumberReader;
 
@@ -12,21 +12,21 @@ import java.io.LineNumberReader;
  *
  * @author Matthijs Laan, B3Partners
  */
-public class SDLParseException extends Exception {
+public class DXFParseException extends Exception {
 
     private String message;
 
-    SDLParseException(LineNumberReader reader, String message) {
+    DXFParseException(LineNumberReader reader, String message) {
         super();
         this.message = "line " + reader.getLineNumber() + ": " + message;
     }
 
-    SDLParseException(SDLEntry entry, String message) {
+    DXFParseException(DXFEntry entry, String message) {
         super();
         this.message = "entry starting at line " + entry.getStartingLineNumber() + ": " + message;
     }
 
-    SDLParseException(SDLEntry entry, String message, Exception cause) {
+    DXFParseException(DXFEntry entry, String message, Exception cause) {
         super(cause);
         this.message = "entry starting at line " + entry.getStartingLineNumber() + ": " + message;
     }

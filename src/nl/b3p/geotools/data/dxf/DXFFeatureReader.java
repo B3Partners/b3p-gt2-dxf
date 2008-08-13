@@ -1,8 +1,7 @@
 /*
- * $Id: SDLFeatureReader.java 8672 2008-07-17 16:37:57Z Matthijs $
+ * $Id: DXFFeatureReader.java 8672 2008-07-17 16:37:57Z Matthijs $
  */
-
-package nl.b3p.geotools.data.sdl;
+package nl.b3p.geotools.data.dxf;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -36,24 +35,23 @@ import org.apache.commons.io.input.CountingInputStream;
 /**
  * @author Matthijs Laan, B3Partners
  */
-public class SDLFeatureReader implements FeatureReader {
+public class DXFFeatureReader implements FeatureReader {
+
     private GeometryFactory gf;
     private FeatureType ft;
     private CountingInputStream cis;
     private LineNumberReader lnr;
-    
     private String version;
     private Map<String, String[]> metadata = new HashMap<String, String[]>();
-    
     private static final int MARK_SIZE = 8 * 1024;
-    
-    public SDLFeatureReader(URL url, String typeName) throws IOException, SDLParseException {
-        
+
+    public DXFFeatureReader(URL url, String typeName) throws IOException, DXFParseException {
+
         /* TODO for loading large files, obtain a total stream size from somewhere
          * and use an apache commons CountingInputStream to provide current
          * progress info.
          */
-        
+
         /* Note that a LineNumberReader may read more bytes than are strictly
          * returned as characters of lines read.
          */
@@ -63,47 +61,47 @@ public class SDLFeatureReader implements FeatureReader {
          * default encoding, SDF Loader Help doesn't specify encoding
          */
         this.lnr = new LineNumberReader(new InputStreamReader(cis));
-        
-        parseHeader();        
+
+        parseHeader();
         skipCommentsCheckEOF();
         createFeatureType(typeName);
     }
-    
+
     private void parseHeader() throws IOException {
         skipCommentsCheckEOF();
-        for(;;) {
+        for (;;) {
             /* mark the start of the next line */
             lnr.mark(MARK_SIZE);
             String line = lnr.readLine();
-            if(line == null) {
+            if (line == null) {
                 /* eof in or before header, empty file? */
                 break;
             }
-            if(line.trim().length() != 0) {
+            if (line.trim().length() != 0) {
                 int firstChar = line.charAt(0);
-                if(firstChar != '#') {
+                if (firstChar != '#') {
                     /* end of headers, reset stream */
                     lnr.reset();
                     break;
                 }
-                
+
                 /* handle header line */
                 String lcline = line.toLowerCase();
-                if(lcline.startsWith("#version")) {
-                    version = line.substring(line.indexOf('=')+1);
-                } else if(lcline.startsWith("#metadata_begin")) {
+                if (lcline.startsWith("#version")) {
+                    version = line.substring(line.indexOf('=') + 1);
+                } else if (lcline.startsWith("#metadata_begin")) {
                     /* use the lowercase name as map key, case insensitive */
-                    String name = lcline.substring(line.indexOf('=')+1);
+                    String name = lcline.substring(line.indexOf('=') + 1);
                     List<String> contents = new ArrayList<String>();
                     String headerLine;
-                    while((headerLine = lnr.readLine()) != null) {
-                        if(headerLine.toLowerCase().startsWith("#metadata_end")) {
+                    while ((headerLine = lnr.readLine()) != null) {
+                        if (headerLine.toLowerCase().startsWith("#metadata_end")) {
                             break;
                         }
                         contents.add(headerLine.substring(1));
                     }
-                    if(!contents.isEmpty()) {
-                        metadata.put(name, contents.toArray(new String[] {}));
+                    if (!contents.isEmpty()) {
+                        metadata.put(name, contents.toArray(new String[]{}));
                     }
                 }
             } else {
@@ -111,17 +109,17 @@ public class SDLFeatureReader implements FeatureReader {
             }
         }
     }
-    
+
     private void createFeatureType(String typeName) throws DataSourceException {
         CoordinateReferenceSystem crs = null;
         String[] csMetadata = metadata.get("coordinatesystem");
-        if(csMetadata != null) {
+        if (csMetadata != null) {
             String wkt = csMetadata[0];
             try {
                 /* parse WKT */
-		CRSFactory crsFactory = ReferencingFactoryFinder.getCRSFactory(null);
-		crs = crsFactory.createFromWKT(wkt);
-            } catch(Exception e) {
+                CRSFactory crsFactory = ReferencingFactoryFinder.getCRSFactory(null);
+                crs = crsFactory.createFromWKT(wkt);
+            } catch (Exception e) {
                 throw new DataSourceException("Error parsing CoordinateSystem WKT: \"" + wkt + "\"");
             }
         }
@@ -133,7 +131,7 @@ public class SDLFeatureReader implements FeatureReader {
             GeometricAttributeType polygonType = new GeometricAttributeType("the_geom_polygon", MultiPolygon.class, true, null, crs, null);
             gf = pointType.getGeometryFactory(); /* XXX does it matter which GF is used? All have the same CRS... */
             ft = FeatureTypes.newFeatureType(
-                    new AttributeType[] {
+                    new AttributeType[]{
                         pointType,
                         lineType,
                         polygonType,
@@ -143,16 +141,16 @@ public class SDLFeatureReader implements FeatureReader {
                         AttributeTypeFactory.newAttributeType("entryLineNumber", Integer.class),
                         AttributeTypeFactory.newAttributeType("parseError", Boolean.class),
                         AttributeTypeFactory.newAttributeType("error", String.class)
-            }, typeName);
-        } catch(Exception e) {
+                    }, typeName);
+        } catch (Exception e) {
             throw new DataSourceException("Error creating FeatureType", e);
-        } 
+        }
     }
 
     public FeatureType getFeatureType() {
         return ft;
     }
-    
+
     /**
      * Skip empty and comment lines and return EOF status
      * @return true if EOF
@@ -164,12 +162,12 @@ public class SDLFeatureReader implements FeatureReader {
             /* mark the start of the next line */
             lnr.mark(MARK_SIZE);
             line = lnr.readLine();
-            if(line == null) {
+            if (line == null) {
                 /* skipped comments till end of file */
                 return true;
             }
-        } while(line.length() == 0 || line.charAt(0) == ';');
-        
+        } while (line.length() == 0 || line.charAt(0) == ';');
+
         /* EOF or the last line we read wasn't a comment or empty line. reset 
          * the stream so the next readLine() call will return the line we just
          * read
@@ -180,30 +178,36 @@ public class SDLFeatureReader implements FeatureReader {
 
     public Feature next() throws IOException, IllegalAttributeException, NoSuchElementException {
         try {
-            SDLEntry entry = new SDLEntry(lnr, gf);
+            DXFEntry entry = new DXFEntry(lnr, gf);
             /* XXX use key as featureID? */
             MultiPoint point = null;
             MultiLineString line = null;
             MultiPolygon polygon = null;
             Geometry g = entry.getGeometry();
-            switch(entry.getType()) {
-                case SDLEntry.TYPE_POINT: point = (MultiPoint)g; break;
-                case SDLEntry.TYPE_LINE: line = (MultiLineString)g; break;
-                case SDLEntry.TYPE_POLYGON: polygon = (MultiPolygon)g; break;
+            switch (entry.getType()) {
+                case DXFEntry.TYPE_POINT:
+                    point = (MultiPoint) g;
+                    break;
+                case DXFEntry.TYPE_LINE:
+                    line = (MultiLineString) g;
+                    break;
+                case DXFEntry.TYPE_POLYGON:
+                    polygon = (MultiPolygon) g;
+                    break;
             }
-            Feature f = ft.create(new Object[] {
-                point, 
-                line, 
-                polygon, 
-                entry.getName(), 
-                entry.getKey(), 
-                entry.getUrlLink(),
-                new Integer(entry.getStartingLineNumber()),
-                new Boolean(entry.isParseError()),
-                entry.getErrorDescription()
-            });
+            Feature f = ft.create(new Object[]{
+                        point,
+                        line,
+                        polygon,
+                        entry.getName(),
+                        entry.getKey(),
+                        entry.getUrlLink(),
+                        new Integer(entry.getStartingLineNumber()),
+                        new Boolean(entry.isParseError()),
+                        entry.getErrorDescription()
+                    });
             return f;
-        } catch (SDLParseException ex) {
+        } catch (DXFParseException ex) {
             throw new IOException("SDL parse error", ex);
         } catch (EOFException e) {
             return null;
@@ -220,7 +224,7 @@ public class SDLFeatureReader implements FeatureReader {
     public void close() throws IOException {
         lnr.close();
     }
-    
+
     public long getByteCount() {
         return cis.getByteCount();
     }

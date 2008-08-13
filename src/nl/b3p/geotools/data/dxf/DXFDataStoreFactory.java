@@ -1,8 +1,8 @@
 /*
- * $Id: SDLDataStoreFactory.java 8672 2008-07-17 16:37:57Z Matthijs $
+ * $Id: DXFDataStoreFactory.java 8672 2008-07-17 16:37:57Z Matthijs $
  */
 
-package nl.b3p.geotools.data.sdl;
+package nl.b3p.geotools.data.dxf;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,27 +19,27 @@ import org.geotools.data.FileDataStoreFactorySpi;
 /**
  * @author Matthijs Laan, B3Partners
  */
-public class SDLDataStoreFactory implements FileDataStoreFactorySpi {
+public class DXFDataStoreFactory implements FileDataStoreFactorySpi {
 
-    public static final DataStoreFactorySpi.Param PARAM_URL = new Param("url", URL.class, "url to a .sdl file");    
+    public static final DataStoreFactorySpi.Param PARAM_URL = new Param("url", URL.class, "url to a .dxf file");    
     
     public String getDisplayName() {
-        return "SDL File";
+        return "DXF File";
     }
 
     public String getDescription() {
-        return "Autodesk SDF Loader SDL format";
+        return "Autodesk DXF format";
     }
 
     public String[] getFileExtensions() {
-        return new String[] {".sdl"};
+        return new String[] {".dxf"};
     }
 
     /**
      * @return true if the file of the f parameter exists
      */
     public boolean canProcess(URL f) {
-        return f.getFile().toLowerCase().endsWith(".sdl");  
+        return f.getFile().toLowerCase().endsWith(".dxf");  
     }
 
     /**
@@ -75,7 +75,7 @@ public class SDLDataStoreFactory implements FileDataStoreFactorySpi {
     }
 
     public String getTypeName(URL url) throws IOException {
-        return SDLDataStore.getURLTypeName(url);
+        return DXFDataStore.getURLTypeName(url);
     }
 
     public DataStore createDataStore(URL url) throws IOException {
@@ -84,7 +84,7 @@ public class SDLDataStoreFactory implements FileDataStoreFactorySpi {
         
         boolean isLocal = url.getProtocol().equalsIgnoreCase("file");
         if(isLocal && !(new File(url.getFile()).exists())){
-            throw new UnsupportedOperationException("Specified SDL file \"" + url + "\" does not exist, this plugin is read-only so no new file will be created");
+            throw new UnsupportedOperationException("Specified DXF file \"" + url + "\" does not exist, this plugin is read-only so no new file will be created");
         } else {
             return createDataStore(params);
         }        
@@ -92,10 +92,10 @@ public class SDLDataStoreFactory implements FileDataStoreFactorySpi {
 
     public DataStore createDataStore(Map params) throws IOException {
         if(!canProcess(params)) {
-            throw new FileNotFoundException( "SDL file not found: " + params);
+            throw new FileNotFoundException( "DXF file not found: " + params);
         }
         /* XXX use param for GeometryFactory?... */
-        return new SDLDataStore((URL)params.get(PARAM_URL.key));
+        return new DXFDataStore((URL)params.get(PARAM_URL.key));
     }
 
     public DataStore createNewDataStore(Map params) throws IOException {

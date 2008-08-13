@@ -1,8 +1,8 @@
 /*
- * $Id: SDLEntry.java 8672 2008-07-17 16:37:57Z Matthijs $
+ * $Id: DXFEntry.java 8672 2008-07-17 16:37:57Z Matthijs $
  */
 
-package nl.b3p.geotools.data.sdl;
+package nl.b3p.geotools.data.dxf;
 
 import com.vividsolutions.jts.algorithm.CGAlgorithms;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -21,15 +21,15 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Represents a single feature from a SDL file, which can be a point, polyline(s)
- * or polygon(s). A SDL feature has name, key and urlLink attributes.
+ * Represents a single feature from a DXF file, which can be a point, polyline(s)
+ * or polygon(s). A DXF feature has name, key and urlLink attributes.
  * 
  * On construction, this class will parse the next feature from a LineNumberReader
  * and create a JTS Geometry.
  * 
  * @author Matthijs Laan, B3Partners
  */
-class SDLEntry {
+class DXFEntry {
     public static final int TYPE_POINT = 0;
     public static final int TYPE_LINE = 1;
     public static final int TYPE_POLYGON = 2;
@@ -46,7 +46,7 @@ class SDLEntry {
     
     private final Geometry geometry;
     
-    public SDLEntry(LineNumberReader input, GeometryFactory geometryFactory) throws IOException, SDLParseException {
+    public DXFEntry(LineNumberReader input, GeometryFactory geometryFactory) throws IOException, DXFParseException {
         String header;
         
         /* skip comments and empty lines */
@@ -73,13 +73,13 @@ class SDLEntry {
             pos = readQuotedString(header, pos, keyBuf);
             pos = readQuotedString(header, pos, urlLinkBuf);
         } catch(IndexOutOfBoundsException e) {
-            throw new SDLParseException(this, "invalid entry header");
+            throw new DXFParseException(this, "invalid entry header");
         }
         int numPts = -1;
         try {
             numPts = Integer.parseInt(header.substring(pos+1)); /* skip last ',' */
         } catch(Exception e) {
-            throw new SDLParseException(this, "invalid entry header: can't parse NumPts");
+            throw new DXFParseException(this, "invalid entry header: can't parse NumPts");
         }
         
         name = nameBuf.toString();
@@ -96,25 +96,25 @@ class SDLEntry {
             try {
                 entryCoordinates.add(parseCoordinate(input.readLine()));
             } catch(NumberFormatException nfe) {
-                throw new SDLParseException(input, "error parsing number: " + nfe.getMessage());
+                throw new DXFParseException(input, "error parsing number: " + nfe.getMessage());
             } catch(Exception ioe) {
-                throw new SDLParseException(input, ioe.getMessage());
+                throw new DXFParseException(input, ioe.getMessage());
             }
         }        
 
         geometry = createGeometry(entryCoordinates);     
     }
 
-    private static int getEntryType(LineNumberReader lnr, String header) throws SDLParseException {
+    private static int getEntryType(LineNumberReader lnr, String header) throws DXFParseException {
         if(header == null || header.length() == 0) {
-            throw new SDLParseException(lnr, "Expected header, found empty line!");
+            throw new DXFParseException(lnr, "Expected header, found empty line!");
         }
         char entryType = header.charAt(0);
         switch(entryType) {
             case 'M': return TYPE_POINT;
             case 'P': return TYPE_POLYGON; 
             case 'L': return TYPE_LINE; 
-            default: throw new SDLParseException(lnr, "Unkown entry type (expected P, L or M): " + entryType);
+            default: throw new DXFParseException(lnr, "Unkown entry type (expected P, L or M): " + entryType);
         }        
     }
 
@@ -122,12 +122,12 @@ class SDLEntry {
         return type;
     }
         
-    private int readQuotedString(String s, int pos, StringBuffer output) throws IndexOutOfBoundsException, SDLParseException {
+    private int readQuotedString(String s, int pos, StringBuffer output) throws IndexOutOfBoundsException, DXFParseException {
         if(s.charAt(pos) == ',') {
             ++pos;
         }
         if(s.charAt(pos++) != '"') {
-            throw new SDLParseException(this, "invalid entry header");
+            throw new DXFParseException(this, "invalid entry header");
         }
         int length = s.length();
         /* note that loop does not end at end of string, because a quoted string
@@ -153,9 +153,9 @@ class SDLEntry {
         return pos;
     }
     
-    private Coordinate parseCoordinate(String line) throws SDLParseException {
+    private Coordinate parseCoordinate(String line) throws DXFParseException {
         if(line == null || line.trim().length() == 0) {
-            throw new SDLParseException(this, "Unexpected end of input");
+            throw new DXFParseException(this, "Unexpected end of input");
         }
         String[] coords = line.split(",");
         /* Y first, then X */
@@ -190,7 +190,7 @@ class SDLEntry {
         return errorDescription;
     }
     
-    private Geometry createGeometry(List<Coordinate> entryCoordinates) throws SDLParseException {
+    private Geometry createGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
         if(entryCoordinates.isEmpty()) {
             return new GeometryCollection(new Geometry[] {}, geometryFactory);
         } 
@@ -203,24 +203,24 @@ class SDLEntry {
                 default: throw new IllegalStateException();
             }
         } catch(Exception e) {
-            if(e instanceof SDLParseException) {
-                throw (SDLParseException)e;
+            if(e instanceof DXFParseException) {
+                throw (DXFParseException)e;
             } else {
-                throw new SDLParseException(this, "Error creating geometry", e);
+                throw new DXFParseException(this, "Error creating geometry", e);
             }
         }
     }
     
-    private Geometry createPointGeometry(List<Coordinate> entryCoordinates) throws SDLParseException {
+    private Geometry createPointGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
         /* A SDL point entry is always one point, no multipoints */
         if(entryCoordinates.size() != 1) {
-            throw new SDLParseException(this, "Point can have only one coordinate");
+            throw new DXFParseException(this, "Point can have only one coordinate");
         }
 
         return geometryFactory.createMultiPoint(new Coordinate[]{entryCoordinates.get(0)});
     } 
 
-    private Geometry createLineGeometry(List<Coordinate> entryCoordinates) throws SDLParseException {
+    private Geometry createLineGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
         /* In SDL, a polyline entry may consist of multiple lines (polypolyline),
          * lines are separated by repeating the first coordinate of a line.
          * Lines are never closed, but may be constructed as such in a 
@@ -251,7 +251,7 @@ class SDLEntry {
      * The iterator is advanced to the first coordinate of the next polyline or
      * the end.
      */
-    private LineString createLineString(Iterator<Coordinate> coordinatesIterator) throws SDLParseException {
+    private LineString createLineString(Iterator<Coordinate> coordinatesIterator) throws DXFParseException {
         List<Coordinate> vertices = new ArrayList<Coordinate>();
 
         Coordinate first = coordinatesIterator.next();
@@ -291,7 +291,7 @@ class SDLEntry {
         }
     }
     
-    private Geometry createPolygonGeometry(List<Coordinate> entryCoordinates) throws SDLParseException {
+    private Geometry createPolygonGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
         /* In practice, output from the SDF Loader does not follow the constraints
          * of the SDL file format very closely especially with polygons. Therefore
          * this parser ignores invalid polygons. This may result in empty or weird
