@@ -1,10 +1,15 @@
 package nl.b3p.geotools.data.dxf.entities;
 
+import java.io.EOFException;
+import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 import java.io.IOException;
 
 
-import nl.b3p.geotools.data.dxf.DXFUnivers;
+import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
+import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
+import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 
 public class DXFVertex extends DXFPoint {
 
@@ -32,33 +37,58 @@ public class DXFVertex extends DXFPoint {
         _bulge = orig._bulge;
     }
 
-    public static DXFVertex read(DXFBufferedReader br, DXFUnivers univers, DXFPolyline p) throws IOException {
-        String ligne, ligne_temp;
+    public static DXFVertex read(DXFLineNumberReader br, DXFUnivers univers, DXFPolyline p) throws IOException {
         DXFLayer l = null;
         int visibility = 0, c = -1;
         double x = 0, y = 0, b = 0;
-//        myLog.writeLog("> new Vertex");
+        DXFCodeValuePair cvp = null;
+        DXFGroupCode gc = null;
 
-        while ((ligne = br.readLine()) != null && !ligne.equalsIgnoreCase("0")) {
-            ligne_temp = ligne;
-            ligne = br.readLine();
-
-            if (ligne_temp.equalsIgnoreCase("8")) {
-                l = univers.findLayer(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("42")) {
-                b = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("10")) {
-                x = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("20")) {
-                y = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("62")) {
-                c = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("60")) {
-                visibility = Integer.parseInt(ligne);
-            } else {
-//                myLog.writeLog("Unknown :" + ligne_temp);
+        boolean doLoop = true;
+        while (doLoop) {
+            cvp = new DXFCodeValuePair();
+            try {
+                gc = cvp.read(br);
+            } catch (DXFParseException ex) {
+                throw new IOException("DXF parse error", ex);
+            } catch (EOFException e) {
+                doLoop = false;
+                break;
             }
+
+            switch (gc) {
+                case TYPE:
+                    String type = cvp.getStringValue();
+                    // geldt voor alle waarden van type
+                    br.reset();
+                    doLoop = false;
+                    break;
+                case LAYER_NAME: //"8"
+                    l = univers.findLayer(cvp.getStringValue());
+                    break;
+                case DOUBLE_3: //"42"
+                    b = cvp.getDoubleValue();
+                    break;
+                case X_1: //"10"
+                    x = cvp.getDoubleValue();
+                    break;
+                case Y_1: //"20"
+                    y = cvp.getDoubleValue();
+                    break;
+                case COLOR: //"62"
+                    c = cvp.getIntValue();
+                    break;
+                case VISIBILITY: //"60"
+                    visibility = cvp.getIntValue();
+                    break;
+                default:
+                    break;
+            }
+
         }
-        return new DXFVertex(x, y, b, c, l, p, visibility);
+
+        DXFVertex e = new DXFVertex(x, y, b, c, l, p, visibility);
+        e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        return e;
     }
 }

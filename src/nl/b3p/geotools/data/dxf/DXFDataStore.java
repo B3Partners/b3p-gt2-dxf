@@ -4,6 +4,7 @@
 
 package nl.b3p.geotools.data.dxf;
 
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import java.io.IOException;
 import java.net.URL;
 import org.geotools.data.AbstractFileDataStore;

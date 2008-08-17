@@ -1,13 +1,18 @@
 package nl.b3p.geotools.data.dxf.entities;
 
+import java.io.EOFException;
+import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 import java.io.IOException;
 
 
-import nl.b3p.geotools.data.dxf.DXFUnivers;
+import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFBlock;
 import nl.b3p.geotools.data.dxf.header.DXFBlockReference;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
+import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
+import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 
 public class DXFDimension extends DXFBlockReference {
 
@@ -26,8 +31,8 @@ public class DXFDimension extends DXFBlockReference {
         super(-1, null, 0, null, "", null);
     }
 
-    public static DXFDimension read(DXFBufferedReader br, DXFUnivers univers) throws IOException {
-        String ligne = "", ligne_temp = "", dimension = "", nomBlock = "";
+    public static DXFDimension read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
+        String dimension = "", nomBlock = "";
         DXFDimension d = null;
         DXFLayer l = null;
         DXFBlock refBlock = null;
@@ -35,38 +40,68 @@ public class DXFDimension extends DXFBlockReference {
         int visibility = 0, c = -1;
         DXFLineType lineType = null;
 
-        while ((ligne = br.readLine()) != null && !ligne.equalsIgnoreCase("0")) {
-            ligne_temp = ligne;
-            ligne = br.readLine();
+        DXFCodeValuePair cvp = null;
+        DXFGroupCode gc = null;
 
-            if (ligne_temp.equalsIgnoreCase("8")) {
-                l = univers.findLayer(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("1")) {
-                dimension = ligne;
-            } else if (ligne_temp.equalsIgnoreCase("50")) {
-                angle = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("2")) {
-                nomBlock = ligne;
-                refBlock = univers.findBlock(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("6")) {
-                lineType = univers.findLType(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("10")) {
-                x = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("20")) {
-                y = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("60")) {
-                visibility = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("62")) {
-                c = Integer.parseInt(ligne);
+        boolean doLoop = true;
+        while (doLoop) {
+            cvp = new DXFCodeValuePair();
+            try {
+                gc = cvp.read(br);
+            } catch (DXFParseException ex) {
+                throw new IOException("DXF parse error", ex);
+            } catch (EOFException e) {
+                doLoop = false;
+                break;
             }
-        }
-        d = new DXFDimension(angle, dimension, x, y, refBlock, nomBlock, l, visibility, c, lineType);
 
-        if ((refBlock == null) || (refBlock != null && !refBlock._name.equalsIgnoreCase(nomBlock))) {
+            switch (gc) {
+                case TYPE:
+                    String type = cvp.getStringValue();
+                    // geldt voor alle waarden van type
+                    br.reset();
+                    doLoop = false;
+                    break;
+                case LAYER_NAME: //"8"
+                    l = univers.findLayer(cvp.getStringValue());
+                    break;
+                case TEXT: //"1"
+                    dimension = cvp.getStringValue();
+                    break;
+                case ANGLE_1: //"50"
+                    angle = cvp.getDoubleValue();
+                    break;
+                case NAME: //"2"
+                    nomBlock = cvp.getStringValue();
+                    refBlock = univers.findBlock(nomBlock);
+                    break;
+                case LINETYPE_NAME: //"6"
+                    lineType = univers.findLType(cvp.getStringValue());
+                    break;
+                case X_1: //"10"
+                    x = cvp.getDoubleValue();
+                    break;
+                case Y_1: //"20"
+                    y = cvp.getDoubleValue();
+                    break;
+                case VISIBILITY: //"60"
+                    visibility = cvp.getIntValue();
+                    break;
+                case COLOR: //"62"
+                    c = cvp.getIntValue();
+                    break;
+                default:
+                    break;
+            }
+
+        }
+
+        d = new DXFDimension(angle, dimension, x, y, refBlock, nomBlock, l, visibility, c, lineType);
+        d.setType(DXFEntity.TYPE_UNSUPPORTED);
+ 
+        if ((refBlock == null)) {
             univers.addRefBlockForUpdate(d);
         }
         return d;
     }
-
-
 }

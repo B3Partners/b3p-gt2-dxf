@@ -1,14 +1,18 @@
 package nl.b3p.geotools.data.dxf.header;
 
 import java.awt.geom.Point2D;
+import java.io.EOFException;
 import java.io.IOException;
 
 
-import nl.b3p.geotools.data.dxf.DXFUnivers;
-import nl.b3p.geotools.data.dxf.entities.DXFBufferedReader;
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.entities.DXFPoint;
+import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
+import nl.b3p.geotools.data.dxf.parser.DXFConstants;
+import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 
-public class DXFHeader {
+public class DXFHeader implements DXFConstants {
 
     public DXFPoint _LIMMIN;
     public DXFPoint _LIMMAX;
@@ -35,93 +39,98 @@ public class DXFHeader {
         _ACADVER = version;
     }
 
-    public static DXFHeader read(DXFBufferedReader br, DXFUnivers univers) throws IOException {
-        String ligne, version = "AC1006";
-        double x = 0, y = 0;
+    public static DXFHeader read(DXFLineNumberReader br) throws IOException {
         Point2D.Double limmin = null;
         Point2D.Double limmax = null;
         Point2D.Double extmin = null;
         Point2D.Double extmax = null;
         int fillmode = 0;
+        String version = "AC1006";
 
-        while ((ligne = br.readLine()) != null && !ligne.equals("0")) {
-            ligne = br.readLine();
-            if (ligne.equals("0")) {
+
+        DXFCodeValuePair cvp = null;
+        DXFGroupCode gc = null;
+
+        boolean doLoop = true;
+        while (doLoop) {
+            cvp = new DXFCodeValuePair();
+            try {
+                gc = cvp.read(br);
+            } catch (DXFParseException ex) {
+                throw new IOException("DXF parse error", ex);
+            } catch (EOFException e) {
+                doLoop = false;
                 break;
-            } else if (ligne.equalsIgnoreCase("$LIMMIN")) {
-                x = 0;
-                y = 0;
-                ligne = br.readLine();
-                if (ligne.equalsIgnoreCase("10")) {
-                    ligne = br.readLine();
-                    x = Double.parseDouble(ligne);
-                }
-                ligne = br.readLine();
-                if (ligne.equalsIgnoreCase("20")) {
-                    ligne = br.readLine();
-                    y = Double.parseDouble(ligne);
-                }
+            }
 
-                limmin = new Point2D.Double(x, y);
-            } else if (ligne.equalsIgnoreCase("$LIMMAX")) {
-                x = 0;
-                y = 0;
-                ligne = br.readLine();
-                if (ligne.equalsIgnoreCase("10")) {
-                    ligne = br.readLine();
-                    x = Double.parseDouble(ligne);
-                }
-                ligne = br.readLine();
-                if (ligne.equalsIgnoreCase("20")) {
-                    ligne = br.readLine();
-                    y = Double.parseDouble(ligne);
-                }
-
-                limmax = new Point2D.Double(x, y);
-            } else if (ligne.equalsIgnoreCase("$EXTMIN")) {
-                x = 0;
-                y = 0;
-                ligne = br.readLine();
-                if (ligne.equalsIgnoreCase("10")) {
-                    ligne = br.readLine();
-                    x = Double.parseDouble(ligne);
-                }
-                ligne = br.readLine();
-                if (ligne.equalsIgnoreCase("20")) {
-                    ligne = br.readLine();
-                    y = Double.parseDouble(ligne);
-                }
-
-                extmin = new Point2D.Double(x, y);
-            } else if (ligne.equalsIgnoreCase("$EXTMAX")) {
-                x = 0;
-                y = 0;
-                ligne = br.readLine();
-                if (ligne.equalsIgnoreCase("10")) {
-                    ligne = br.readLine();
-                    x = Double.parseDouble(ligne);
-                }
-                ligne = br.readLine();
-                if (ligne.equalsIgnoreCase("20")) {
-                    ligne = br.readLine();
-                    y = Double.parseDouble(ligne);
-                }
-
-                extmax = new Point2D.Double(x, y);
-            } else if (ligne.equalsIgnoreCase("$ACADVER")) {
-                ligne = br.readLine();
-                if (ligne.equalsIgnoreCase("1")) {
-                    ligne = br.readLine();
-                    version = ligne;
-                }
-            } else if (ligne.equalsIgnoreCase("$FILLMODE")) {
-                ligne = br.readLine();
-                if (ligne.equalsIgnoreCase("70")) {
-                    ligne = br.readLine();
-                    if (!ligne.equalsIgnoreCase("0")) {
-                        fillmode = Integer.parseInt(ligne);
+            switch (gc) {
+                case TYPE:
+                    String type = cvp.getStringValue();
+                    if (type.equals(ENDSEC)) {
+                        doLoop = false;
+                        break;
                     }
-                }
+                    break;
+                case VARIABLE_NAME:
+                    String variableName = cvp.getStringValue();
+                    double x = 0,
+                     y = 0;
+                    int tfillmode = 0;
+                    String tversion = null;
+
+                    boolean doLoop2 = true;
+                    while (doLoop2) {
+                        cvp = new DXFCodeValuePair();
+                        try {
+                            gc = cvp.read(br);
+                        } catch (DXFParseException ex) {
+                            throw new IOException("DXF parse error", ex);
+                        } catch (EOFException e) {
+                            doLoop2 = false;
+                            doLoop = false;
+                            break;
+                        }
+
+                        switch (gc) {
+                            case TYPE:
+                                type = cvp.getStringValue();
+                                if (type.equals(ENDSEC)) {
+                                    doLoop = false;
+                                    doLoop2 = false;
+                                    break;
+                                }
+                                break;
+                            case X_1:
+                                x = cvp.getDoubleValue();
+                                break;
+                            case Y_1:
+                                y = cvp.getDoubleValue();
+                                break;
+                            case TEXT:
+                                tversion = cvp.getStringValue();
+                                break;
+                            case INT_1:
+                                tfillmode = cvp.getIntValue();
+                                break;
+                            default:
+                        }
+                    }
+                    if (variableName.equals($LIMMIN)) {
+                        limmin = new Point2D.Double(x, y);
+                    } else if (variableName.equals($LIMMAX)) {
+                        limmax = new Point2D.Double(x, y);
+                    } else if (variableName.equals($EXTMIN)) {
+                        extmin = new Point2D.Double(x, y);
+                    } else if (variableName.equals($EXTMAX)) {
+                        extmax = new Point2D.Double(x, y);
+                    } else if (variableName.equals($ACADVER)) {
+                        version = tversion;
+                    } else if (variableName.equals($FILLMODE)) {
+                        fillmode = tfillmode;
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -131,6 +140,4 @@ public class DXFHeader {
                 new DXFPoint(extmax, -1, null, 1, 1),
                 fillmode, version);
     }
-
-
 }

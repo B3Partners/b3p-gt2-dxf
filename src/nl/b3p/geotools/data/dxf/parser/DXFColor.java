@@ -1,4 +1,4 @@
-package nl.b3p.geotools.data.dxf;
+package nl.b3p.geotools.data.dxf.parser;
 
 import java.awt.Color;
 

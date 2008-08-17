@@ -1,14 +1,19 @@
 package nl.b3p.geotools.data.dxf.entities;
 
+import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 import java.awt.geom.GeneralPath;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.Vector;
 
 
-import nl.b3p.geotools.data.dxf.DXFUnivers;
+import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
-import nl.b3p.geotools.data.dxf.header.DXFTable;
+import nl.b3p.geotools.data.dxf.header.DXFTables;
+import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
+import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 
 public class DXFPolyline extends DXFEntity {
 
@@ -30,11 +35,11 @@ public class DXFPolyline extends DXFEntity {
     }
 
     public DXFPolyline(DXFLayer l) {
-        super(-1, l, 0, null, DXFTable.defaultThickness);
+        super(-1, l, 0, null, DXFTables.defaultThickness);
     }
 
     public DXFPolyline() {
-        super(-1, null, 0, null, DXFTable.defaultThickness);
+        super(-1, null, 0, null, DXFTables.defaultThickness);
     }
 
     public DXFPolyline(DXFPolyline orig) {
@@ -47,41 +52,62 @@ public class DXFPolyline extends DXFEntity {
         _flag = orig._flag;
     }
 
-    public static DXFPolyline read(DXFBufferedReader br, DXFUnivers univers) throws IOException {
-        String ligne, ligne_temp;
+    public static DXFPolyline read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
         String name = "";
-        int visibility = 0, flag = 0, color = -1;
+        int visibility = 0, flag = 0, c = -1;
         DXFLineType lineType = null;
         Vector<DXFVertex> lv = new Vector<DXFVertex>();
         DXFPolyline p = null;
         DXFLayer l = null;
 
-//        myLog.writeLog("> new myPolyline");
-        while ((ligne = br.readLine()) != null && !ligne.equalsIgnoreCase("SEQEND")) {
-            ligne_temp = ligne;
-            while ((ligne = br.readLine()) != null && ligne.equalsIgnoreCase("VERTEX")) {
-                lv.addElement(DXFVertex.read(br, univers, p));
-            }
-            if (ligne_temp.equalsIgnoreCase("2")) {
-                name = ligne;
-            } else if (ligne_temp.equalsIgnoreCase("8")) {
-                l = univers.findLayer(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("6")) {
-                lineType = univers.findLType(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("62")) {
-                color = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("70")) {
-                flag = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("60")) {
-                visibility = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("0")) {
-                break;
-            } else {
-//                myLog.writeLog("Unknown :" + ligne_temp + "(" + ligne + ")");
-            }
-        }
+        DXFCodeValuePair cvp = null;
+        DXFGroupCode gc = null;
 
-        return new DXFPolyline(name, flag, color, l, lv, visibility, lineType, DXFTable.defaultThickness);
+        boolean doLoop = true;
+        while (doLoop) {
+            cvp = new DXFCodeValuePair();
+            try {
+                gc = cvp.read(br);
+            } catch (DXFParseException ex) {
+                throw new IOException("DXF parse error", ex);
+            } catch (EOFException e) {
+                doLoop = false;
+                break;
+            }
+
+            switch (gc) {
+                case TYPE:
+                    String type = cvp.getStringValue();
+                    // geldt voor alle waarden van type
+                    br.reset();
+                    doLoop = false;
+                    break;
+                case NAME: //"2"
+                    name = cvp.getStringValue();
+                    break;
+                case LAYER_NAME: //"8"
+                    l = univers.findLayer(cvp.getStringValue());
+                    break;
+                case LINETYPE_NAME: //"6"
+                    lineType = univers.findLType(cvp.getStringValue());
+                    break;
+                case COLOR: //"62"
+                    c = cvp.getIntValue();
+                    break;
+                case INT_1: //"70"
+                    flag = cvp.getIntValue();
+                    break;
+                case VISIBILITY: //"60"
+                    visibility = cvp.getIntValue();
+                    break;
+                default:
+                    break;
+            }
+
+        }
+        DXFPolyline e = new DXFPolyline(name, flag, c, l, lv, visibility, lineType, DXFTables.defaultThickness);
+        e.setType(DXFEntity.TYPE_LINE);
+        return e;
     }
 }
 

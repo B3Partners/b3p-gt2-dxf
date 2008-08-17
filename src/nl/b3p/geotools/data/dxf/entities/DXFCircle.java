@@ -1,17 +1,21 @@
 package nl.b3p.geotools.data.dxf.entities;
 
+import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 import java.awt.geom.Ellipse2D;
+import java.io.EOFException;
 import java.io.IOException;
 
 
-import nl.b3p.geotools.data.dxf.DXFUnivers;
+import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
-import nl.b3p.geotools.data.dxf.header.DXFTable;
+import nl.b3p.geotools.data.dxf.header.DXFTables;
+import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
+import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 
 public class DXFCircle extends DXFEntity {
 
-    private static final long serialVersionUID = 1L;
     private Ellipse2D.Double _e = new Ellipse2D.Double();
     public DXFPoint _point = new DXFPoint();
     public double _radius = 0;
@@ -24,7 +28,7 @@ public class DXFCircle extends DXFEntity {
     }
 
     public DXFCircle() {
-        super(0, null, 0, null, DXFTable.defaultThickness);
+        super(0, null, 0, null, DXFTables.defaultThickness);
     }
 
     public DXFCircle(DXFCircle orig) {
@@ -34,38 +38,66 @@ public class DXFCircle extends DXFEntity {
 
     }
 
-    public static DXFCircle read(DXFBufferedReader br, DXFUnivers univers) throws NumberFormatException, IOException {
+    public static DXFCircle read(DXFLineNumberReader br, DXFUnivers univers) throws NumberFormatException, IOException {
 
-        String ligne, ligne_temp;
-        int visibility = 0, color = 0;
+        int visibility = 0, c = 0;
         double x = 0, y = 0, r = 0, thickness = 1;
         DXFLayer l = null;
         DXFLineType lineType = null;
 
-        while ((ligne = br.readLine()) != null && !ligne.equalsIgnoreCase("0")) {
-            ligne_temp = ligne;
-            ligne = br.readLine();
+        DXFCodeValuePair cvp = null;
+        DXFGroupCode gc = null;
 
-            if (ligne_temp.equalsIgnoreCase("8")) {
-                l = univers.findLayer(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("60")) {
-                visibility = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("62")) {
-                color = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("6")) {
-                lineType = univers.findLType(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("40")) {
-                r = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("10")) {
-                x = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("39")) {
-                thickness = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("20")) {
-                y = Double.parseDouble(ligne);
-            } else {
-//                myLog.writeLog("Unknown :" + ligne_temp + "(" + ligne + ")");
+        boolean doLoop = true;
+        while (doLoop) {
+            cvp = new DXFCodeValuePair();
+            try {
+                gc = cvp.read(br);
+            } catch (DXFParseException ex) {
+                throw new IOException("DXF parse error", ex);
+            } catch (EOFException e) {
+                doLoop = false;
+                break;
             }
+
+            switch (gc) {
+                case TYPE:
+                    String type = cvp.getStringValue();
+                    // geldt voor alle waarden van type
+                    br.reset();
+                    doLoop = false;
+                    break;
+                case LINETYPE_NAME: //"6"
+                    lineType = univers.findLType(cvp.getStringValue());
+                    break;
+                case LAYER_NAME: //"8"
+                    l = univers.findLayer(cvp.getStringValue());
+                    break;
+                case THICKNESS: //"39"
+                    thickness = cvp.getDoubleValue();
+                    break;
+                case VISIBILITY: //"60"
+                    visibility = cvp.getIntValue();
+                    break;
+                case COLOR: //"62"
+                    c = cvp.getIntValue();
+                    break;
+                case X_1: //"10"
+                    x = cvp.getDoubleValue();
+                    break;
+                case Y_1: //"20"
+                    y = cvp.getDoubleValue();
+                    break;
+                case DOUBLE_1: //"40"
+                    r = cvp.getDoubleValue();
+                    break;
+                default:
+                    break;
+            }
+
         }
-        return new DXFCircle(new DXFPoint(x, y, color, l, visibility, 1), r, lineType, color, l, visibility, thickness);
+        DXFCircle e = new DXFCircle(new DXFPoint(x, y, c, l, visibility, 1), r, lineType, c, l, visibility, thickness);
+        e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        return e;
     }
 }

@@ -5,15 +5,20 @@
  */
 package nl.b3p.geotools.data.dxf.entities;
 
+import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 import java.awt.geom.GeneralPath;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.Vector;
 
 
-import nl.b3p.geotools.data.dxf.DXFUnivers;
+import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
-import nl.b3p.geotools.data.dxf.header.DXFTable;
+import nl.b3p.geotools.data.dxf.header.DXFTables;
+import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
+import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 
 public class DXFLwPolyline extends DXFEntity {
 
@@ -36,11 +41,11 @@ public class DXFLwPolyline extends DXFEntity {
     }
 
     public DXFLwPolyline(DXFLayer l) {
-        super(-1, l, 0, null, DXFTable.defaultThickness);
+        super(-1, l, 0, null, DXFTables.defaultThickness);
     }
 
     public DXFLwPolyline() {
-        super(-1, null, 0, null, DXFTable.defaultThickness);
+        super(-1, null, 0, null, DXFTables.defaultThickness);
     }
 
     public DXFLwPolyline(DXFLwPolyline orig) {
@@ -53,65 +58,85 @@ public class DXFLwPolyline extends DXFEntity {
         _flag = orig._flag;
     }
 
-    public static DXFLwPolyline read(DXFBufferedReader br, DXFUnivers univers) throws IOException {
-        String ligne, ligne_temp;
+    public static DXFLwPolyline read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
         String name = "";
-        int visibility = 0, flag = 0, color = -1;
+        int visibility = 0, flag = 0, c = -1;
         DXFLineType lineType = null;
         Vector<DXFLwVertex> lv = new Vector<DXFLwVertex>();
 //		DXFLwPolyline 			p		= null;	
         DXFLayer l = null;
 
-        while ((ligne = br.readLine()) != null && !ligne.equalsIgnoreCase("SEQEND")) {
-            ligne_temp = ligne;
-            ligne = br.readLine();
-            if (ligne_temp.equals("10")) {
-                double x = Double.parseDouble(ligne);
-                double bulge = 0.0, y = 0.0;
-                while ((ligne_temp = br.readLine()) != null) {
-                    if (ligne_temp.equals("20")) {
-                        ligne = br.readLine();
-                        y = Double.parseDouble(ligne);
-                    } else if (ligne_temp.equals("40")) {
-                        ligne = br.readLine();
-                    // FIXME: Not used
-                    } else if (ligne_temp.equals("41")) {
-                        ligne = br.readLine();
-                    // FIXME: Not used
-                    }
-                    if (ligne_temp.equals("42")) {
-                        ligne = br.readLine();
-                        bulge = Double.parseDouble(ligne);
-                    } else {
-                        break;
-                    }
-                }
-                lv.addElement(new DXFLwVertex(x, y, bulge));
-            }
-            if (ligne_temp.equalsIgnoreCase("2")) {
-                name = ligne;
-            } else if (ligne_temp.equalsIgnoreCase("8")) {
-                l = univers.findLayer(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("6")) {
-                lineType = univers.findLType(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("62")) {
-                color = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("70")) {
-                flag = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("60")) {
-                visibility = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("0")) {
+        DXFCodeValuePair cvp = null;
+        DXFGroupCode gc = null;
+
+        boolean doLoop = true;
+        while (doLoop) {
+            cvp = new DXFCodeValuePair();
+            try {
+                gc = cvp.read(br);
+            } catch (DXFParseException ex) {
+                throw new IOException("DXF parse error", ex);
+            } catch (EOFException e) {
+                doLoop = false;
                 break;
-            } else {
-//                myLog.writeLog("Unknown :" + ligne_temp + "(" + ligne + ")");
             }
+
+            switch (gc) {
+                case TYPE:
+                    String type = cvp.getStringValue(); // SEQEND ???
+                    // geldt voor alle waarden van type
+                    br.reset();
+                    doLoop = false;
+                    break;
+//             if (ligne_temp.equals("10")) {
+//                double x = Double.parseDouble(ligne);
+//                double bulge = 0.0, y = 0.0;
+//                while ((ligne_temp = br.readLine()) != null) {
+//                    if (ligne_temp.equals("20")) {
+//                        ligne = br.readLine();
+//                        y = Double.parseDouble(ligne);
+//                    } else if (ligne_temp.equals("40")) {
+//                        ligne = br.readLine();
+//                    // FIXME: Not used
+//                    } else if (ligne_temp.equals("41")) {
+//                        ligne = br.readLine();
+//                    // FIXME: Not used
+//                    }
+//                    if (ligne_temp.equals("42")) {
+//                        ligne = br.readLine();
+//                        bulge = Double.parseDouble(ligne);
+//                    } else {
+//                        break;
+//                    }
+//                }
+//                lv.addElement(new DXFLwVertex(x, y, bulge));
+//            }
+                case NAME: //"2"
+                    name = cvp.getStringValue();
+                    break;
+                case LAYER_NAME: //"8"
+                    l = univers.findLayer(cvp.getStringValue());
+                    break;
+                case LINETYPE_NAME: //"6"
+                    lineType = univers.findLType(cvp.getStringValue());
+                    break;
+                case COLOR: //"62"
+                    c = cvp.getIntValue();
+                    break;
+                case INT_1: //"70"
+                    flag = cvp.getIntValue();
+                    break;
+                case VISIBILITY: //"60"
+                    visibility = cvp.getIntValue();
+                    break;
+                default:
+                    break;
+            }
+
         }
-        /*if(l==null)
-        univers.findLayer("default");*/
-
-        return new DXFLwPolyline(name, flag, color, l, lv, visibility, lineType, DXFTable.defaultThickness);
+        DXFLwPolyline e = new DXFLwPolyline(name, flag, c, l, lv, visibility, lineType, DXFTables.defaultThickness);
+        e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        return e;
     }
-
-
 }
 

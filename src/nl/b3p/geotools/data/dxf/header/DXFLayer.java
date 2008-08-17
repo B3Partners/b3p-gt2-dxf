@@ -1,53 +1,35 @@
 package nl.b3p.geotools.data.dxf.header;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.Vector;
 
 
-import nl.b3p.geotools.data.dxf.entities.DXFBufferedReader;
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
-import nl.b3p.geotools.data.dxf.DXFUnivers;
+import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
+import nl.b3p.geotools.data.dxf.parser.DXFConstants;
+import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 
-public class DXFLayer extends DXFEntity {
+public class DXFLayer extends DXFEntity implements DXFConstants {
 
-    // consts
-    public static final short LAYER_FROZEN = 1;  /* layer is frozen */
-
-    public static final short LAYER_AUTO_FROZEN = 2;  /* layer automatically frozen in all VIEWPORTS */
-
-    public static final short LAYER_LOCKED = 4;  /* layer is locked */
-
-    public static final short LAYER_XREF = 8;  /* layer is from XREF */
-
-    public static final short LAYER_XREF_FOUND = 16;  /* layer is from known XREF */
-
-    public static final short LAYER_USED = 32;  /* layer was used */
-
-    public static final short LAYER_INVISIBLE = 16384;  /* (own:) layer is invisible */
-
-    private static final long serialVersionUID = 1L;
-    public DXFTable _refTable;
     public int _flag = 0;
     public String _nom;
     public Vector<DXFEntity> theEnt = new Vector<DXFEntity>();
 
-    public DXFLayer(String nom, int c, DXFLineType lineType, int visibility, int flag) {
-        super(c, null, visibility, lineType, DXFTable.defaultThickness);
+    public DXFLayer(String nom, int c) {
+        super(c, null, 0, null, DXFTables.defaultThickness);
         _nom = nom;
-        _flag = flag;
     }
 
     public DXFLayer(String nom, int c, int flag) {
-        super(c, null, 0, null, DXFTable.defaultThickness);
+        super(c, null, 0, null, DXFTables.defaultThickness);
         _nom = nom;
         _flag = flag;
     }
 
-    public DXFLayer(String nom, int c) {
-        super(c, null, 0, null, DXFTable.defaultThickness);
-        _nom = nom;
-    }
-
+    @Override
     public void setVisible(boolean bool) {
         isVisible = bool;
         for (int i = 0; i < theEnt.size(); i++) {
@@ -55,32 +37,49 @@ public class DXFLayer extends DXFEntity {
         }
     }
 
-    public static DXFLayer read(DXFBufferedReader br, DXFUnivers u) throws NumberFormatException, IOException {
-        String ligne, ligne_tmp, name = "";
-        DXFLayer l = null;
+    public static DXFLayer read(DXFLineNumberReader br) throws NumberFormatException, IOException {
+        String name = "";
         int f = 0, color = 0;
 
-        while ((ligne = br.readLine().trim()) != null && !(ligne.equals("9") || ligne.equals("0"))) {
-            ligne_tmp = ligne.trim();
-            ligne = br.readLine().trim();
+        DXFCodeValuePair cvp = null;
+        DXFGroupCode gc = null;
 
-            if (ligne_tmp.equalsIgnoreCase("2")) {
-                name = ligne;
-            } else if (ligne_tmp.equalsIgnoreCase("62")) {
-                color = Integer.parseInt(ligne);
-            } else if (ligne_tmp.equalsIgnoreCase("70")) {
-                f = Integer.parseInt(ligne);
+        boolean doLoop = true;
+        while (doLoop) {
+            cvp = new DXFCodeValuePair();
+            try {
+                gc = cvp.read(br);
+            } catch (DXFParseException ex) {
+                throw new IOException("DXF parse error", ex);
+            } catch (EOFException e) {
+                doLoop = false;
+                break;
+            }
+
+            switch (gc) {
+                case TYPE:
+                case VARIABLE_NAME:
+                    br.reset();
+                    doLoop = false;
+                    break;
+                case NAME:
+                    name = cvp.getStringValue();
+                    break;
+                case COLOR:
+                    color = cvp.getShortValue();
+                    break;
+                case INT_1:
+                    f = cvp.getIntValue();
+                    break;
+                default:
             }
         }
 
-        l = new DXFLayer(name, color, f);
+        DXFLayer l = new DXFLayer(name, color, f);
         if (color < 0) {
             l.setVisible(false);
         }
-        u.currLayer = l;
         return l;
     }
-
-
 }
 

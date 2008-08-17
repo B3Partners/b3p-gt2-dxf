@@ -1,15 +1,19 @@
 package nl.b3p.geotools.data.dxf.header;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.Vector;
 
 
-import nl.b3p.geotools.data.dxf.entities.DXFBufferedReader;
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
+import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 
 public class DXFLineType {
 
     private float _motif[] = parseTxt("_");
-    public String _name = "myLineType.0";	// 2
+    public String _name = "myLineType.0";                       // 2
     public String _value = "";					// 3
     public float _length = 0;					// 40
     public float _count = 0;					// 73
@@ -32,29 +36,51 @@ public class DXFLineType {
 
     }
 
-    public static DXFLineType read(DXFBufferedReader br) throws IOException {
-        String ligne, ligne_temp, value = "", name = "";
+    public static DXFLineType read(DXFLineNumberReader br) throws IOException {
+        String value = "", name = "";
         Vector<Float> spacing = new Vector<Float>();
         float count = 0, length = 0;
 
-        while ((ligne = br.readLine()) != null && !ligne.equalsIgnoreCase("0")) {
-            ligne_temp = ligne;
-            ligne = br.readLine();
+        DXFCodeValuePair cvp = null;
+        DXFGroupCode gc = null;
 
-            if (ligne_temp.equalsIgnoreCase("2")) {
-                name = ligne;
-            } else if (ligne_temp.equalsIgnoreCase("3")) {
-                value = ligne;
-            } else if (ligne_temp.equalsIgnoreCase("73")) {
-                count = Float.parseFloat(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("40")) {
-                length = Float.parseFloat(ligne);
-                ;
-            } else if (ligne_temp.equalsIgnoreCase("49")) {
-                spacing.add(Float.parseFloat(ligne));
-            } else {
-//                myLog.writeLog("Unknown :" + ligne_temp + " (" + ligne + ")");
+        boolean doLoop = true;
+        while (doLoop) {
+            cvp = new DXFCodeValuePair();
+            try {
+                gc = cvp.read(br);
+            } catch (DXFParseException ex) {
+                throw new IOException("DXF parse error", ex);
+            } catch (EOFException e) {
+                doLoop = false;
+                break;
             }
+
+             switch (gc) {
+                case TYPE:
+                case VARIABLE_NAME:
+                    br.reset();
+                    doLoop = false;
+                    break;
+                case NAME:
+                    name = cvp.getStringValue();
+                    break;
+                case TEXT_OR_NAME_2:
+                    value = cvp.getStringValue();
+                    break;
+                case INT_4:
+                    count = cvp.getIntValue();
+                    break;
+                case DOUBLE_1:
+                    length = (float) cvp.getDoubleValue();
+                    break;
+                case REPEATED_DOUBLE_VALUE:
+                    spacing.add((float) cvp.getDoubleValue());
+                    break;
+                default:
+                    break;
+            }
+
         }
 
         if (value.equals("") && name.equals("")) {
@@ -62,10 +88,6 @@ public class DXFLineType {
         } else {
             return new DXFLineType(name, value, length, count, spacing);
         }
-    }
-
-    public String toString() {
-        return _value + " (" + _name + ")";
     }
 
     public static float[] parseTxt(String s) {
@@ -116,7 +138,7 @@ public class DXFLineType {
 
     public float[] parseDXF() {
         if (_count != this._spacing.size()) {
-            return DXFTable.defautMotif;
+            return DXFTables.defautMotif;
         }
         float[] ret = new float[(int) _count];
 
@@ -125,7 +147,7 @@ public class DXFLineType {
         }
 
         if (ret.length == 0) {
-            ret = DXFTable.defautMotif;
+            ret = DXFTables.defautMotif;
         }
         return ret;
     }

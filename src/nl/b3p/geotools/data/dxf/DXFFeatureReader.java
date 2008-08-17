@@ -3,6 +3,7 @@
  */
 package nl.b3p.geotools.data.dxf;
 
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiLineString;
@@ -11,13 +12,12 @@ import com.vividsolutions.jts.geom.MultiPolygon;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Vector;
+import nl.b3p.geotools.data.dxf.entities.DXFEntity;
+import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import org.geotools.data.DataSourceException;
 import org.geotools.data.FeatureReader;
 import org.geotools.feature.AttributeType;
@@ -40,10 +40,10 @@ public class DXFFeatureReader implements FeatureReader {
     private GeometryFactory gf;
     private FeatureType ft;
     private CountingInputStream cis;
-    private LineNumberReader lnr;
+    private DXFLineNumberReader lnr;
     private String version;
-    private Map<String, String[]> metadata = new HashMap<String, String[]>();
-    private static final int MARK_SIZE = 8 * 1024;
+    private DXFUnivers theUnivers;
+    private Iterator<DXFEntity> entityIterator;
 
     public DXFFeatureReader(URL url, String typeName) throws IOException, DXFParseException {
 
@@ -60,59 +60,27 @@ public class DXFFeatureReader implements FeatureReader {
         /* TODO provide param to override encoding! This uses the platform
          * default encoding, SDF Loader Help doesn't specify encoding
          */
-        this.lnr = new LineNumberReader(new InputStreamReader(cis));
+        this.lnr = new DXFLineNumberReader(new InputStreamReader(cis));
 
-        parseHeader();
-        skipCommentsCheckEOF();
         createFeatureType(typeName);
-    }
 
-    private void parseHeader() throws IOException {
-        skipCommentsCheckEOF();
-        for (;;) {
-            /* mark the start of the next line */
-            lnr.mark(MARK_SIZE);
-            String line = lnr.readLine();
-            if (line == null) {
-                /* eof in or before header, empty file? */
-                break;
-            }
-            if (line.trim().length() != 0) {
-                int firstChar = line.charAt(0);
-                if (firstChar != '#') {
-                    /* end of headers, reset stream */
-                    lnr.reset();
-                    break;
-                }
-
-                /* handle header line */
-                String lcline = line.toLowerCase();
-                if (lcline.startsWith("#version")) {
-                    version = line.substring(line.indexOf('=') + 1);
-                } else if (lcline.startsWith("#metadata_begin")) {
-                    /* use the lowercase name as map key, case insensitive */
-                    String name = lcline.substring(line.indexOf('=') + 1);
-                    List<String> contents = new ArrayList<String>();
-                    String headerLine;
-                    while ((headerLine = lnr.readLine()) != null) {
-                        if (headerLine.toLowerCase().startsWith("#metadata_end")) {
-                            break;
-                        }
-                        contents.add(headerLine.substring(1));
-                    }
-                    if (!contents.isEmpty()) {
-                        metadata.put(name, contents.toArray(new String[]{}));
-                    }
-                }
-            } else {
-                /* skip empty line */
-            }
+        /* Read in complete dxf file
+         * Required because blocks are defined upfront and later inserted
+         **/
+        theUnivers = new DXFUnivers();
+        theUnivers.read(lnr);
+        Vector<DXFEntity> theEntities = theUnivers.theEntities;
+        if (theEntities != null) {
+            theEntities = new Vector<DXFEntity>();
         }
+        entityIterator = theEntities.iterator();
+
+        version = theUnivers._header._ACADVER;
     }
 
     private void createFeatureType(String typeName) throws DataSourceException {
         CoordinateReferenceSystem crs = null;
-        String[] csMetadata = metadata.get("coordinatesystem");
+        String[] csMetadata = null; //TODO hoe zit dit in dxf
         if (csMetadata != null) {
             String wkt = csMetadata[0];
             try {
@@ -151,74 +119,45 @@ public class DXFFeatureReader implements FeatureReader {
         return ft;
     }
 
-    /**
-     * Skip empty and comment lines and return EOF status
-     * @return true if EOF
-     * @throws java.io.IOException
-     */
-    private boolean skipCommentsCheckEOF() throws IOException {
-        String line;
-        do {
-            /* mark the start of the next line */
-            lnr.mark(MARK_SIZE);
-            line = lnr.readLine();
-            if (line == null) {
-                /* skipped comments till end of file */
-                return true;
-            }
-        } while (line.length() == 0 || line.charAt(0) == ';');
-
-        /* EOF or the last line we read wasn't a comment or empty line. reset 
-         * the stream so the next readLine() call will return the line we just
-         * read
-         */
-        lnr.reset();
-        return false;
-    }
-
     public Feature next() throws IOException, IllegalAttributeException, NoSuchElementException {
-        try {
-            DXFEntry entry = new DXFEntry(lnr, gf);
-            /* XXX use key as featureID? */
-            MultiPoint point = null;
-            MultiLineString line = null;
-            MultiPolygon polygon = null;
-            Geometry g = entry.getGeometry();
-            switch (entry.getType()) {
-                case DXFEntry.TYPE_POINT:
-                    point = (MultiPoint) g;
-                    break;
-                case DXFEntry.TYPE_LINE:
-                    line = (MultiLineString) g;
-                    break;
-                case DXFEntry.TYPE_POLYGON:
-                    polygon = (MultiPolygon) g;
-                    break;
-            }
-            Feature f = ft.create(new Object[]{
-                        point,
-                        line,
-                        polygon,
-                        entry.getName(),
-                        entry.getKey(),
-                        entry.getUrlLink(),
-                        new Integer(entry.getStartingLineNumber()),
-                        new Boolean(entry.isParseError()),
-                        entry.getErrorDescription()
-                    });
-            return f;
-        } catch (DXFParseException ex) {
-            throw new IOException("SDL parse error", ex);
-        } catch (EOFException e) {
-            return null;
+        DXFEntity ent = null;
+        // TODO beter om helemaal niet op de vector te zetten indien unsupported
+        do {
+            ent = (DXFEntity) entityIterator.next();
+        } while (ent.getType()== DXFEntity.TYPE_UNSUPPORTED && 
+                entityIterator.hasNext());
+        /* XXX use key as featureID? */
+        MultiPoint point = null;
+        MultiLineString line = null;
+        MultiPolygon polygon = null;
+        Geometry g = ent.getGeometry();
+        switch (ent.getType()) {
+            case DXFEntity.TYPE_POINT:
+                point = (MultiPoint) g;
+                break;
+            case DXFEntity.TYPE_LINE:
+                line = (MultiLineString) g;
+                break;
+            case DXFEntity.TYPE_POLYGON:
+                polygon = (MultiPolygon) g;
+                break;
         }
+        Feature f = ft.create(new Object[]{
+                    point,
+                    line,
+                    polygon,
+                    ent.getName(),
+                    ent.getKey(),
+                    ent.getUrlLink(),
+                    new Integer(ent.getStartingLineNumber()),
+                    new Boolean(ent.isParseError()),
+                    ent.getErrorDescription()
+                });
+        return f;
     }
 
     public boolean hasNext() throws IOException {
-        /* this method should be fast as it will probably be called before each 
-         * next(). skipCommentsCheckEOF will mark()/reset() the stream
-         */
-        return !skipCommentsCheckEOF();
+        return entityIterator.hasNext();
     }
 
     public void close() throws IOException {

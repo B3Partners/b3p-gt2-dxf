@@ -1,14 +1,19 @@
 package nl.b3p.geotools.data.dxf.entities;
 
+import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 import java.awt.font.TextAttribute;
 import java.awt.geom.Rectangle2D;
+import java.io.EOFException;
 import java.io.IOException;
 
 
-import nl.b3p.geotools.data.dxf.DXFUnivers;
+import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
-import nl.b3p.geotools.data.dxf.header.DXFTable;
+import nl.b3p.geotools.data.dxf.header.DXFTables;
+import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
+import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 
 public class DXFText extends DXFEntity {
 
@@ -35,7 +40,7 @@ public class DXFText extends DXFEntity {
     }
 
     public DXFText() {
-        super(-1, null, 0, null, DXFTable.defaultThickness);
+        super(-1, null, 0, null, DXFTables.defaultThickness);
     }
 
     public DXFText(DXFText text) {
@@ -116,7 +121,7 @@ public class DXFText extends DXFEntity {
         return value;
     }
 
-    public static DXFText read(DXFBufferedReader br, DXFUnivers univers) throws IOException {
+    public static DXFText read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
         DXFLayer l = null;
         String ligne = "",
                 ligne_temp = "",
@@ -129,46 +134,80 @@ public class DXFText extends DXFEntity {
                 angle = 0,
                 rotation = 0,
                 zoomfactor = 1,
-                thickness = DXFTable.defaultThickness,
+                thickness = DXFTables.defaultThickness,
                 height = 0;
 
-//		myLog.writeLog(">> myText");
-        while ((ligne = br.readLine()) != null && !ligne.equalsIgnoreCase("0")) {
-            ligne_temp = ligne;
-            ligne = br.readLine();
+        DXFCodeValuePair cvp = null;
+        DXFGroupCode gc = null;
 
-            if (ligne_temp.equalsIgnoreCase("10")) {
-                x = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("20")) {
-                y = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("1")) {
-                value = ligne;
-            } else if (ligne_temp.equalsIgnoreCase("50")) {
-                rotation = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("39")) {
-                thickness = (float) Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("40")) {
-                height = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("51")) {
-                angle = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("41")) {
-                zoomfactor = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("72")) {
-                align = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("8")) {
-                l = univers.findLayer(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("62")) {
-                c = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("7")) {
-                style = ligne;
-            } else if (ligne_temp.equalsIgnoreCase("60")) {
-                visibility = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("6")) {
-                lineType = univers.findLType(ligne);
-            } else {
-//                myLog.writeLog("Unknown :" + ligne_temp + "(" + ligne + ")");
+        boolean doLoop = true;
+        while (doLoop) {
+            cvp = new DXFCodeValuePair();
+            try {
+                gc = cvp.read(br);
+            } catch (DXFParseException ex) {
+                throw new IOException("DXF parse error", ex);
+            } catch (EOFException e) {
+                doLoop = false;
+                break;
             }
+
+            switch (gc) {
+                case TYPE:
+                    String type = cvp.getStringValue();
+                    // geldt voor alle waarden van type
+                    br.reset();
+                    doLoop = false;
+                    break;
+                case X_1: //"10"
+                    x = cvp.getDoubleValue();
+                    break;
+                case Y_1: //"20"
+                    y = cvp.getDoubleValue();
+                    break;
+                case TEXT: //"1"
+                    value = cvp.getStringValue();
+                    break;
+                case ANGLE_1: //"50"
+                    rotation = cvp.getDoubleValue();
+                    break;
+                case THICKNESS: //"39"
+                    thickness = cvp.getDoubleValue();
+                    break;
+                case DOUBLE_1: //"40"
+                    height = cvp.getDoubleValue();
+                    break;
+                case ANGLE_2: //"51"
+                    angle = cvp.getDoubleValue();
+                    break;
+                case DOUBLE_2: //"41"
+                    zoomfactor = cvp.getDoubleValue();
+                    break;
+                case INT_3: //"72"
+                    align = cvp.getIntValue();
+                    break;
+                case LAYER_NAME: //"8"
+                    l = univers.findLayer(cvp.getStringValue());
+                    break;
+                case COLOR: //"62"
+                    c = cvp.getIntValue();
+                    break;
+                case TEXT_STYLE_NAME: //"7"
+                    style = cvp.getStringValue();
+                    break;
+                case VISIBILITY: //"60"
+                    visibility = cvp.getIntValue();
+                    break;
+                case LINETYPE_NAME: //"6"
+                    lineType = univers.findLType(cvp.getStringValue());
+                    break;
+                default:
+                    break;
+            }
+
         }
-        return new DXFText(x, y, value, rotation, thickness, height, align, style, c, l, angle, zoomfactor, visibility, lineType);
+        DXFText e = new DXFText(x, y, value, rotation, thickness, height, align, style, c, l, angle, zoomfactor, visibility, lineType);
+        e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        return e;
     }
 }

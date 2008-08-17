@@ -1,18 +1,20 @@
 package nl.b3p.geotools.data.dxf.entities;
 
-import java.awt.geom.Line2D;
+import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 import java.awt.geom.Point2D;
+import java.io.EOFException;
 import java.io.IOException;
 
 
-import nl.b3p.geotools.data.dxf.DXFUnivers;
+import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
-import nl.b3p.geotools.data.dxf.header.DXFTable;
+import nl.b3p.geotools.data.dxf.header.DXFTables;
+import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
+import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 
 public class DXFPoint extends DXFEntity {
 
-    private static final long serialVersionUID = 1L;
-    private Line2D.Double _l = new Line2D.Double();
     public Point2D.Double _point = new Point2D.Double(0, 0);
 
     public DXFPoint(Point2D.Double p, int c, DXFLayer l, int visibility, float thickness) {
@@ -26,7 +28,7 @@ public class DXFPoint extends DXFEntity {
     }
 
     public DXFPoint(Point2D.Double p) {
-        super(-1, null, 0, null, DXFTable.defaultThickness);
+        super(-1, null, 0, null, DXFTables.defaultThickness);
         if (p == null) {
             p = new Point2D.Double(0, 0);
         }
@@ -34,16 +36,16 @@ public class DXFPoint extends DXFEntity {
     }
 
     public DXFPoint() {
-        super(-1, null, 0, null, DXFTable.defaultThickness);
+        super(-1, null, 0, null, DXFTables.defaultThickness);
     }
 
     public DXFPoint(double x, double y, int c, DXFLayer l, int visibility, double thickness) {
-        super(c, l, visibility, null, DXFTable.defaultThickness);
+        super(c, l, visibility, null, DXFTables.defaultThickness);
         _point = new Point2D.Double(x, y);
     }
 
     public DXFPoint(DXFPoint _a) {
-        super(_a._color, _a._refLayer, 0, null, DXFTable.defaultThickness);
+        super(_a._color, _a._refLayer, 0, null, DXFTables.defaultThickness);
         _point = new Point2D.Double(_a.X(), _a.Y());
     }
 
@@ -63,35 +65,58 @@ public class DXFPoint extends DXFEntity {
         return _point.getY();
     }
 
-    public static DXFPoint read(DXFBufferedReader br, DXFUnivers univers) throws NumberFormatException, IOException {
-        String ligne, ligne_temp;
+    public static DXFPoint read(DXFLineNumberReader br, DXFUnivers univers) throws NumberFormatException, IOException {
         DXFLayer l = null;
-        int visibility = 0, color = -1;
+        int visibility = 0, c = -1;
         double x = 0, y = 0, thickness = 0;
 
-//        myLog.writeLog("> new myPoint");
-        while ((ligne = br.readLine()) != null && !ligne.equalsIgnoreCase("0")) {
-            ligne_temp = ligne;
-            ligne = br.readLine();
+        DXFCodeValuePair cvp = null;
+        DXFGroupCode gc = null;
 
-            if (ligne_temp.equalsIgnoreCase("8")) {
-                l = univers.findLayer(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("10")) {
-                x = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("20")) {
-                y = Double.parseDouble(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("62")) {
-                color = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("60")) {
-                visibility = Integer.parseInt(ligne);
-            } else if (ligne_temp.equalsIgnoreCase("39")) {
-                thickness = Double.parseDouble(ligne);
-            } else {
-//                myLog.writeLog("Unknown :" + ligne_temp + "(" + ligne + ")");
+        boolean doLoop = true;
+        while (doLoop) {
+            cvp = new DXFCodeValuePair();
+            try {
+                gc = cvp.read(br);
+            } catch (DXFParseException ex) {
+                throw new IOException("DXF parse error", ex);
+            } catch (EOFException e) {
+                doLoop = false;
+                break;
             }
+
+            switch (gc) {
+                case TYPE:
+                    String type = cvp.getStringValue();
+                    // geldt voor alle waarden van type
+                    br.reset();
+                    doLoop = false;
+                    break;
+                case LAYER_NAME: //"8"
+                    l = univers.findLayer(cvp.getStringValue());
+                    break;
+                case X_1: //"10"
+                    x = cvp.getDoubleValue();
+                    break;
+                case Y_1: //"20"
+                    y = cvp.getDoubleValue();
+                    break;
+                case COLOR: //"62"
+                    c = cvp.getIntValue();
+                    break;
+                case VISIBILITY: //"60"
+                    visibility = cvp.getIntValue();
+                    break;
+                case THICKNESS: //"39"
+                    thickness = cvp.getDoubleValue();
+                    break;
+                default:
+                    break;
+            }
+
         }
-        return new DXFPoint(x, y, color, l, visibility, thickness);
+        DXFPoint e = new DXFPoint(x, y, c, l, visibility, thickness);
+        e.setType(DXFEntity.TYPE_POINT);
+        return e;
     }
-
-
 }
