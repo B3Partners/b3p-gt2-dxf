@@ -1,0 +1,108 @@
+package nl.b3p.geotools.data.dxf.header;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.util.Vector;
+
+import nl.b3p.geotools.data.dxf.entities.DXFArc;
+import nl.b3p.geotools.data.dxf.entities.DXFCircle;
+import nl.b3p.geotools.data.dxf.entities.DXFDimension;
+import nl.b3p.geotools.data.dxf.entities.DXFEllipse;
+import nl.b3p.geotools.data.dxf.entities.DXFEntity;
+import nl.b3p.geotools.data.dxf.entities.DXFInsert;
+import nl.b3p.geotools.data.dxf.entities.DXFLine;
+import nl.b3p.geotools.data.dxf.entities.DXFLwPolyline;
+import nl.b3p.geotools.data.dxf.entities.DXFPoint;
+import nl.b3p.geotools.data.dxf.entities.DXFPolyline;
+import nl.b3p.geotools.data.dxf.entities.DXFSolid;
+import nl.b3p.geotools.data.dxf.entities.DXFText;
+import nl.b3p.geotools.data.dxf.entities.DXFTrace;
+import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
+import nl.b3p.geotools.data.dxf.parser.DXFConstants;
+import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
+
+public class DXFEntities implements DXFConstants {
+
+    public Vector<DXFEntity> theEntities = new Vector<DXFEntity>();
+
+    public DXFEntities() {
+    }
+
+    public DXFEntities(Vector<DXFEntity> sEntities) {
+        if (sEntities == null) {
+            sEntities = new Vector<DXFEntity>();
+        }
+        this.theEntities = sEntities;
+    }
+
+    public static DXFEntities readEntities(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
+        Vector<DXFEntity> sEnt = new Vector<DXFEntity>();
+
+        DXFCodeValuePair cvp = null;
+        DXFGroupCode gc = null;
+
+        boolean doLoop = true;
+        while (doLoop) {
+            cvp = new DXFCodeValuePair();
+            try {
+                gc = cvp.read(br);
+            } catch (DXFParseException ex) {
+                throw new IOException("DXF parse error", ex);
+            } catch (EOFException e) {
+                doLoop = false;
+                break;
+            }
+
+            switch (gc) {
+                case TYPE:
+                    DXFEntity dxfe = null;
+                    String type = cvp.getStringValue();
+                    if (type.equals(ENDSEC)) {
+                        doLoop = false;
+                        break;
+//                    } else if (type.equals(ATTDEF)) {
+//                        dxfe = new DXFPoint();
+//                    } else if (type.equals(ENDBLK)) {
+//                        dxfe = new DXFPoint();
+                    } else if (type.equals("LINE")) {
+                        dxfe = DXFLine.read(br, univers);
+                    } else if (type.equals("ARC")) {
+                        dxfe = DXFArc.read(br, univers);
+                    } else if (type.equals("CIRCLE")) {
+                        dxfe = DXFCircle.read(br, univers);
+                    } else if (type.equals("POLYLINE")) {
+                        dxfe = DXFPolyline.read(br, univers);
+                    } else if (type.equals("LWPOLYLINE")) {
+                        dxfe = DXFLwPolyline.read(br, univers);
+                    } else if (type.equals("POINT")) {
+                        dxfe = DXFPoint.read(br, univers);
+                    } else if (type.equals("SOLID")) {
+                        dxfe = DXFSolid.read(br, univers);
+                    } else if (type.equals("TEXT")) {
+                        dxfe = DXFText.read(br, univers);
+                    } else if (type.equals("MTEXT")) {
+                        dxfe = DXFText.read(br, univers);
+                    } else if (type.equals("INSERT")) {
+                        dxfe = DXFInsert.read(br, univers);
+                    } else if (type.equals("DIMENSION")) {
+                        dxfe = DXFDimension.read(br, univers);
+                    } else if (type.equals("TRACE")) {
+                        dxfe = DXFTrace.read(br, univers);
+                    } else if (type.equals("ELLIPSE")) {
+                        dxfe = DXFEllipse.read(br, univers);
+                    }
+                    if (dxfe != null) {
+                        sEnt.add(dxfe);
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+        }
+        return new DXFEntities(sEnt);
+    }
+}
