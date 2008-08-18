@@ -17,8 +17,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public abstract class DXFEntity {
+    private static final Log log = LogFactory.getLog(DXFEntity.class);
 
     /* feature write */
     public static final int TYPE_POINT = 0;
@@ -185,7 +188,7 @@ public abstract class DXFEntity {
     private void addError(String msg) {
         if (!parseError) {
             parseError = true;
-            errorDescription = "entry starting line " + startingLineNumber + ": " + msg;
+            errorDescription = "entry starting line " + getStartingLineNumber() + ": " + msg;
         } else {
             errorDescription += "; " + msg;
         }

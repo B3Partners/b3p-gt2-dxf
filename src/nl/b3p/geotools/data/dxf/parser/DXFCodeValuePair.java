@@ -1,15 +1,15 @@
 package nl.b3p.geotools.data.dxf.parser;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
-import java.io.EOFException;
 import java.io.IOException;
-import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  *
  * @author Chris
  */
 public class DXFCodeValuePair {
+    private static final Log log = LogFactory.getLog(DXFCodeValuePair.class);
 
     private DXFGroupCode gc;
     private short shortValue = 0;

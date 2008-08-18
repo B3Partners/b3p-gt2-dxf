@@ -1,7 +1,7 @@
 package nl.b3p.geotools.data.dxf.entities;
 
 import java.io.EOFException;
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.IOException;
 
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
@@ -12,8 +12,11 @@ import nl.b3p.geotools.data.dxf.header.DXFLineType;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFInsert extends DXFBlockReference {
+    private static final Log log = LogFactory.getLog(DXFInsert.class);
 
     public DXFPoint _point = new DXFPoint();
 
@@ -42,6 +45,9 @@ public class DXFInsert extends DXFBlockReference {
         int visibility = 0, c = -1;
         DXFBlock refBlock = null;
         DXFLineType lineType = null;
+
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
 
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
@@ -79,13 +85,13 @@ public class DXFInsert extends DXFBlockReference {
                     y = cvp.getDoubleValue();
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getIntValue();
+                    visibility = cvp.getShortValue();
                     break;
                 case LINETYPE_NAME: //"6"
                     lineType = univers.findLType(cvp.getStringValue());
                     break;
                 case COLOR: //"62"
-                    c = cvp.getIntValue();
+                    c = cvp.getShortValue();
                     break;
                 default:
                     break;
@@ -95,11 +101,38 @@ public class DXFInsert extends DXFBlockReference {
 
         m = new DXFInsert(x, y, nomBlock, refBlock, l, visibility, c, lineType);
         m.setType(DXFEntity.TYPE_UNSUPPORTED);
+        m.setStartingLineNumber(sln);
 
         if ((refBlock == null) || (refBlock != null && !refBlock._name.equalsIgnoreCase(nomBlock))) {
             univers.addRefBlockForUpdate(m);
         }
 
+        log.debug(m.toString());
         return m;
+    }
+
+    public String toString() {
+        StringBuffer s = new StringBuffer();
+        s.append(" [");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append("]");
+        return s.toString();
     }
 }

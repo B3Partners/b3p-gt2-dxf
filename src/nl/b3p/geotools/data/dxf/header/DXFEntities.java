@@ -21,10 +21,13 @@ import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFConstants;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFEntities implements DXFConstants {
+    private static final Log log = LogFactory.getLog(DXFEntities.class);
 
     public Vector<DXFEntity> theEntities = new Vector<DXFEntity>();
 
@@ -44,6 +47,8 @@ public class DXFEntities implements DXFConstants {
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
+        int sln = br.getLineNumber();
+        log.debug(">Enter at line: " + sln);
         boolean doLoop = true;
         while (doLoop) {
             cvp = new DXFCodeValuePair();
@@ -103,6 +108,18 @@ public class DXFEntities implements DXFConstants {
             }
 
         }
-        return new DXFEntities(sEnt);
+        DXFEntities e = new DXFEntities(sEnt);
+        log.debug(e.toString(sEnt.size()));
+        return e;
     }
+    
+    public String toString(int numEntities) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFEntities [");
+        s.append("numEntities: ");
+        s.append(numEntities);
+        s.append("]");
+        return s.toString();
+    }
+    
 }

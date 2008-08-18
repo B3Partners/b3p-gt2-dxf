@@ -8,15 +8,18 @@ import java.util.Vector;
 import nl.b3p.geotools.data.dxf.parser.DXFColor;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
 import nl.b3p.geotools.data.dxf.entities.DXFPoint;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFConstants;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFBlock extends DXFEntity implements DXFConstants {
 
+    private static final Log log = LogFactory.getLog(DXFBlock.class);
     public Vector<DXFEntity> theEntities = new Vector<DXFEntity>();
     public DXFPoint _point = new DXFPoint();
     public String _name;
@@ -41,13 +44,14 @@ public class DXFBlock extends DXFEntity implements DXFConstants {
     }
 
     public static DXFBlock read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
-        DXFEntity obj = null;
         Vector<DXFEntity> sEnt = new Vector<DXFEntity>();
         String name = "";
         double x = 0, y = 0;
         int flag = 0;
         DXFLayer l = null;
 
+        int sln = br.getLineNumber();
+        log.debug(">Enter at line: " + sln);
 
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
@@ -88,7 +92,7 @@ public class DXFBlock extends DXFEntity implements DXFConstants {
                     name = cvp.getStringValue();
                     break;
                 case INT_1:
-                    flag = cvp.getIntValue();
+                    flag = cvp.getShortValue();
                     break;
                 case X_1:
                     x = cvp.getDoubleValue();
@@ -102,6 +106,27 @@ public class DXFBlock extends DXFEntity implements DXFConstants {
             }
 
         }
-        return new DXFBlock(x, y, flag, name, sEnt, DXFColor.getDefaultColorIndex(), l);
+        DXFBlock e = new DXFBlock(x, y, flag, name, sEnt, DXFColor.getDefaultColorIndex(), l);
+        log.debug(e.toString(x, y, flag, name, sEnt.size(), DXFColor.getDefaultColorIndex()));
+        return e;
+    }
+
+    public String toString(double x, double y, int flag, String name, int numEntities, int c) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFBlock [");
+        s.append("x: ");
+        s.append(x + ", ");
+        s.append("y: ");
+        s.append(y + ", ");
+        s.append("flag: ");
+        s.append(flag + ", ");
+        s.append("name: ");
+        s.append(name + ", ");
+        s.append("color: ");
+        s.append(c + ", ");
+        s.append("numEntities: ");
+        s.append(numEntities);
+        s.append("]");
+        return s.toString();
     }
 }

@@ -1,6 +1,6 @@
 package nl.b3p.geotools.data.dxf.entities;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.awt.geom.Ellipse2D;
 import java.io.EOFException;
 import java.io.IOException;
@@ -13,8 +13,11 @@ import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFCircle extends DXFEntity {
+    private static final Log log = LogFactory.getLog(DXFCircle.class);
 
     private Ellipse2D.Double _e = new Ellipse2D.Double();
     public DXFPoint _point = new DXFPoint();
@@ -45,6 +48,8 @@ public class DXFCircle extends DXFEntity {
         DXFLayer l = null;
         DXFLineType lineType = null;
 
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
@@ -77,10 +82,10 @@ public class DXFCircle extends DXFEntity {
                     thickness = cvp.getDoubleValue();
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getIntValue();
+                    visibility = cvp.getShortValue();
                     break;
                 case COLOR: //"62"
-                    c = cvp.getIntValue();
+                    c = cvp.getShortValue();
                     break;
                 case X_1: //"10"
                     x = cvp.getDoubleValue();
@@ -98,6 +103,25 @@ public class DXFCircle extends DXFEntity {
         }
         DXFCircle e = new DXFCircle(new DXFPoint(x, y, c, l, visibility, 1), r, lineType, c, l, visibility, thickness);
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        e.setStartingLineNumber(sln);
+        log.debug(e.toString(x, y, c, visibility, thickness));
         return e;
+    }
+
+    public String toString(double x, double y, int c, int visibility, double thickness) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFCircle [");
+        s.append("x: ");
+        s.append(x+", ");
+        s.append("y: ");
+        s.append(y+", ");
+        s.append("color: ");
+        s.append(c+", ");
+        s.append("visibility: ");
+        s.append(visibility+", ");
+        s.append("thickness: ");
+        s.append(thickness);
+        s.append("]");
+        return s.toString();
     }
 }

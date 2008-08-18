@@ -7,6 +7,8 @@ package nl.b3p.geotools.data.dxf;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import java.io.IOException;
 import java.net.URL;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.geotools.data.AbstractFileDataStore;
 import org.geotools.data.FeatureReader;
 import org.geotools.feature.FeatureType;
@@ -35,6 +37,7 @@ import org.geotools.feature.FeatureType;
  * @author Matthijs Laan, Chris van Lith B3Partners
  */
 public class DXFDataStore extends AbstractFileDataStore {
+    private static final Log log = LogFactory.getLog(DXFDataStore.class);
     private URL url;
     private String typeName;
     private FeatureReader featureReader;

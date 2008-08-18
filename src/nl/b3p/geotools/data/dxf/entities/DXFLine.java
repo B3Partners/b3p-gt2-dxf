@@ -1,7 +1,7 @@
 package nl.b3p.geotools.data.dxf.entities;
 
 import java.io.EOFException;
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.IOException;
 
 
@@ -12,9 +12,12 @@ import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFLine extends DXFEntity {
 
+    private static final Log log = LogFactory.getLog(DXFLine.class);
     private static final long serialVersionUID = 1L;
     public DXFPoint _a = new DXFPoint();
     public DXFPoint _b = new DXFPoint();
@@ -42,6 +45,9 @@ public class DXFLine extends DXFEntity {
         double x1 = 0, y1 = 0, x2 = 0, y2 = 0, thickness = 0;
         DXFLineType lineType = null;
         int visibility = 0, c = -1;
+
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
 
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
@@ -81,7 +87,7 @@ public class DXFLine extends DXFEntity {
                     l = univers.findLayer(cvp.getStringValue());
                     break;
                 case COLOR: //"62"
-                    c = cvp.getIntValue();
+                    c = cvp.getShortValue();
                     break;
                 case LINETYPE_NAME: //"6"
                     lineType = univers.findLType(cvp.getStringValue());
@@ -90,7 +96,7 @@ public class DXFLine extends DXFEntity {
                     thickness = cvp.getDoubleValue();
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getIntValue();
+                    visibility = cvp.getShortValue();
                     break;
                 default:
                     break;
@@ -105,6 +111,29 @@ public class DXFLine extends DXFEntity {
                 thickness,
                 visibility);
         e.setType(DXFEntity.TYPE_LINE);
+        e.setStartingLineNumber(sln);
+        log.debug(e.toString(x1, y1, x2, y2, c, visibility, thickness));
         return e;
+    }
+
+    public String toString(double x1, double y1, double x2, double y2, int c, int visibility, double thickness) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFLine [");
+        s.append("x1: ");
+        s.append(x1 + ", ");
+        s.append("y1: ");
+        s.append(y1 + ", ");
+        s.append("x2: ");
+        s.append(x2 + ", ");
+        s.append("y2: ");
+        s.append(y2 + ", ");
+        s.append("color: ");
+        s.append(c + ", ");
+        s.append("visibility: ");
+        s.append(visibility + ", ");
+        s.append("thickness: ");
+        s.append(thickness);
+        s.append("]");
+        return s.toString();
     }
 }

@@ -1,7 +1,7 @@
 package nl.b3p.geotools.data.dxf.entities;
 
 import java.io.EOFException;
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.IOException;
 
 
@@ -10,9 +10,12 @@ import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFVertex extends DXFPoint {
 
+    private static final Log log = LogFactory.getLog(DXFVertex.class);
     private static final long serialVersionUID = 1L;
     protected double _bulge = 0;
 
@@ -41,6 +44,10 @@ public class DXFVertex extends DXFPoint {
         DXFLayer l = null;
         int visibility = 0, c = -1;
         double x = 0, y = 0, b = 0;
+
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
+
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
@@ -76,10 +83,10 @@ public class DXFVertex extends DXFPoint {
                     y = cvp.getDoubleValue();
                     break;
                 case COLOR: //"62"
-                    c = cvp.getIntValue();
+                    c = cvp.getShortValue();
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getIntValue();
+                    visibility = cvp.getShortValue();
                     break;
                 default:
                     break;
@@ -89,6 +96,34 @@ public class DXFVertex extends DXFPoint {
 
         DXFVertex e = new DXFVertex(x, y, b, c, l, p, visibility);
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        e.setStartingLineNumber(sln);
+
+        log.debug(e.toString());
         return e;
+    }
+
+    public String toString() {
+        StringBuffer s = new StringBuffer();
+        s.append(" [");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append("]");
+        return s.toString();
     }
 }

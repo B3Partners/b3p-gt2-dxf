@@ -5,7 +5,7 @@
  */
 package nl.b3p.geotools.data.dxf.entities;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.awt.geom.GeneralPath;
 import java.io.EOFException;
 import java.io.IOException;
@@ -19,8 +19,11 @@ import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFLwPolyline extends DXFEntity {
+    private static final Log log = LogFactory.getLog(DXFLwPolyline.class);
 
     private static final long serialVersionUID = 1L;
     public String _name = "myLwPolyline.0";
@@ -65,6 +68,9 @@ public class DXFLwPolyline extends DXFEntity {
         Vector<DXFLwVertex> lv = new Vector<DXFLwVertex>();
 //		DXFLwPolyline 			p		= null;	
         DXFLayer l = null;
+
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
 
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
@@ -121,13 +127,13 @@ public class DXFLwPolyline extends DXFEntity {
                     lineType = univers.findLType(cvp.getStringValue());
                     break;
                 case COLOR: //"62"
-                    c = cvp.getIntValue();
+                    c = cvp.getShortValue();
                     break;
                 case INT_1: //"70"
-                    flag = cvp.getIntValue();
+                    flag = cvp.getShortValue();
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getIntValue();
+                    visibility = cvp.getShortValue();
                     break;
                 default:
                     break;
@@ -136,7 +142,34 @@ public class DXFLwPolyline extends DXFEntity {
         }
         DXFLwPolyline e = new DXFLwPolyline(name, flag, c, l, lv, visibility, lineType, DXFTables.defaultThickness);
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        e.setStartingLineNumber(sln);
+        log.debug(e.toString());
         return e;
+    }
+
+    public String toString() {
+        StringBuffer s = new StringBuffer();
+        s.append(" [");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append("]");
+        return s.toString();
     }
 }
 

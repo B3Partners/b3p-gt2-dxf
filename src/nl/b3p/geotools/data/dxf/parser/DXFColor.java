@@ -1,8 +1,11 @@
 package nl.b3p.geotools.data.dxf.parser;
 
 import java.awt.Color;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public final class DXFColor {
+    private static final Log log = LogFactory.getLog(DXFColor.class);
 
     private static int defaultColor = 0;
     static final Color[] ColorMap = {

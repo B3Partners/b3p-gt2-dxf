@@ -1,0 +1,20 @@
+Entity
+ Layer
+ Color
+ 
+Text (normal) 1 7 (white/black) 
+Text (C) 1 7 (white/black) 
+Text (stops) 1 7 (white/black) 
+Frame 2 3 (green) 
+Metal pipes 3 5 (blue) 
+Metal pipe centers 3 5 (blue) 
+Wooden pipes 4 5 (blue) 
+Wooden pipe centers 4 5 (blue) 
+Horizontal grid 5 8 (gray) 
+Grid (normal) 5 8 (gray) 
+Grid (C) 5 4 (cyan) 
+Toe board top 6 6 (magenta) 
+Toe board bottom 7 6 (magenta) 
+Slider holes 8 6 (magenta) 
+Chest holes 9 6 (magenta) 
+  

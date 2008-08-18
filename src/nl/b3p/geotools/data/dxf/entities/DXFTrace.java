@@ -1,13 +1,17 @@
 package nl.b3p.geotools.data.dxf.entities;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.IOException;
 
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFTrace extends DXFSolid {
+
+    private static final Log log = LogFactory.getLog(DXFTrace.class);
 
     public DXFTrace() {
         super();
@@ -22,6 +26,9 @@ public class DXFTrace extends DXFSolid {
     }
 
     public static DXFEntity read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
+
         int visibility = 0;
         DXFSolid s = (DXFSolid) DXFSolid.read(br, univers);
         if (!s.isVisible) {
@@ -29,7 +36,34 @@ public class DXFTrace extends DXFSolid {
         }
         DXFTrace e = new DXFTrace(s._p1, s._p2, s._p3, s._p4, s._thickness, s._color, s._refLayer, visibility, s._lineType);
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        e.setStartingLineNumber(sln);
+
+        log.debug(e.toString());
         return e;
     }
 
+    public String toString() {
+        StringBuffer s = new StringBuffer();
+        s.append(" [");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append("]");
+        return s.toString();
+    }
 }

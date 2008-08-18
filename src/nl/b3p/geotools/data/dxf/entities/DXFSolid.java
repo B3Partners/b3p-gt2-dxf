@@ -1,6 +1,6 @@
 package nl.b3p.geotools.data.dxf.entities;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.awt.geom.GeneralPath;
 import java.io.EOFException;
 import java.io.IOException;
@@ -13,8 +13,11 @@ import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFSolid extends DXFEntity {
+    private static final Log log = LogFactory.getLog(DXFSolid.class);
 
     private static final long serialVersionUID = 2567756283532200546L;
     public DXFPoint _p1 = new DXFPoint();
@@ -55,9 +58,11 @@ public class DXFSolid extends DXFEntity {
         double p1_x = 0, p2_x = 0, p3_x = 0, p4_x = 0, p1_y = 0, p2_y = 0, p3_y = 0, p4_y = 0;
         double thickness = 0;
         int visibility = 0, c = -1;
-        String ligne = "", ligne_tmp = "";
         DXFLayer l = null;
         DXFLineType lineType = null;
+
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
 
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
@@ -112,13 +117,13 @@ public class DXFSolid extends DXFEntity {
                     l = univers.findLayer(cvp.getStringValue());
                     break;
                 case COLOR: //"62"
-                    c = cvp.getIntValue();
+                    c = cvp.getShortValue();
                     break;
                 case LINETYPE_NAME: //"6"
                     lineType = univers.findLType(cvp.getStringValue());
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getIntValue();
+                    visibility = cvp.getShortValue();
                     break;
                 default:
                     break;
@@ -136,6 +141,33 @@ public class DXFSolid extends DXFEntity {
                 visibility,
                 lineType);
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        e.setStartingLineNumber(sln);
+        log.debug(e.toString());
         return e;
+    }
+
+    public String toString() {
+        StringBuffer s = new StringBuffer();
+        s.append(" [");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append("]");
+        return s.toString();
     }
 }

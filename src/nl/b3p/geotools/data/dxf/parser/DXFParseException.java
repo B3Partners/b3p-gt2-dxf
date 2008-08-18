@@ -4,8 +4,9 @@
 
 package nl.b3p.geotools.data.dxf.parser;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Exception thrown while parsing a SDL file, adds line number in front of
@@ -14,6 +15,7 @@ import nl.b3p.geotools.data.dxf.entities.DXFEntity;
  * @author Matthijs Laan, B3Partners
  */
 public class DXFParseException extends Exception {
+    private static final Log log = LogFactory.getLog(DXFParseException.class);
 
     private String message;
 

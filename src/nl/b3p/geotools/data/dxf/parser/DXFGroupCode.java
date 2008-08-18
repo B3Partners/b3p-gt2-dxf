@@ -1,6 +1,5 @@
 package nl.b3p.geotools.data.dxf.parser;
 
-import nl.b3p.geotools.data.dxf.parser.DXFValueType;
 
 /** 
  * An enumeration that represents all valid DXF Group Codes with

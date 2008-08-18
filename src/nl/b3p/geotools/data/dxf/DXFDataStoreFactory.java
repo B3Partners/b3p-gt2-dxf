@@ -11,6 +11,8 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.DataStoreFactorySpi.Param;
@@ -20,6 +22,7 @@ import org.geotools.data.FileDataStoreFactorySpi;
  * @author Matthijs Laan, B3Partners
  */
 public class DXFDataStoreFactory implements FileDataStoreFactorySpi {
+    private static final Log log = LogFactory.getLog(DXFDataStoreFactory.class);
 
     public static final DataStoreFactorySpi.Param PARAM_URL = new Param("url", URL.class, "url to a .dxf file");    
     

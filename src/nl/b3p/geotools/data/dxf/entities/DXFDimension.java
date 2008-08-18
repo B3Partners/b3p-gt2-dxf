@@ -1,7 +1,7 @@
 package nl.b3p.geotools.data.dxf.entities;
 
 import java.io.EOFException;
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.IOException;
 
 
@@ -13,8 +13,11 @@ import nl.b3p.geotools.data.dxf.header.DXFLineType;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFDimension extends DXFBlockReference {
+    private static final Log log = LogFactory.getLog(DXFDimension.class);
 
     public double _angle = 0;//50
     public String _dimension = "<>";//1
@@ -39,6 +42,9 @@ public class DXFDimension extends DXFBlockReference {
         double angle = 0, x = 0, y = 0;
         int visibility = 0, c = -1;
         DXFLineType lineType = null;
+
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
 
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
@@ -85,10 +91,10 @@ public class DXFDimension extends DXFBlockReference {
                     y = cvp.getDoubleValue();
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getIntValue();
+                    visibility = cvp.getShortValue();
                     break;
                 case COLOR: //"62"
-                    c = cvp.getIntValue();
+                    c = cvp.getShortValue();
                     break;
                 default:
                     break;
@@ -98,10 +104,37 @@ public class DXFDimension extends DXFBlockReference {
 
         d = new DXFDimension(angle, dimension, x, y, refBlock, nomBlock, l, visibility, c, lineType);
         d.setType(DXFEntity.TYPE_UNSUPPORTED);
+        d.setStartingLineNumber(sln);
  
         if ((refBlock == null)) {
             univers.addRefBlockForUpdate(d);
         }
+        log.debug(d.toString());
         return d;
+    }
+
+    public String toString() {
+        StringBuffer s = new StringBuffer();
+        s.append(" [");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append("]");
+        return s.toString();
     }
 }

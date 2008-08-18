@@ -1,6 +1,6 @@
 package nl.b3p.geotools.data.dxf.entities;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.awt.font.TextAttribute;
 import java.awt.geom.Rectangle2D;
 import java.io.EOFException;
@@ -14,9 +14,12 @@ import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFText extends DXFEntity {
 
+    private static final Log log = LogFactory.getLog(DXFText.class);
     public DXFPoint _point = new DXFPoint(); // 10 ,20
     protected String _value = ""; // 1
     protected double _height = 0; // 40
@@ -137,6 +140,9 @@ public class DXFText extends DXFEntity {
                 thickness = DXFTables.defaultThickness,
                 height = 0;
 
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
+
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
@@ -184,19 +190,19 @@ public class DXFText extends DXFEntity {
                     zoomfactor = cvp.getDoubleValue();
                     break;
                 case INT_3: //"72"
-                    align = cvp.getIntValue();
+                    align = cvp.getShortValue();
                     break;
                 case LAYER_NAME: //"8"
                     l = univers.findLayer(cvp.getStringValue());
                     break;
                 case COLOR: //"62"
-                    c = cvp.getIntValue();
+                    c = cvp.getShortValue();
                     break;
                 case TEXT_STYLE_NAME: //"7"
                     style = cvp.getStringValue();
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getIntValue();
+                    visibility = cvp.getShortValue();
                     break;
                 case LINETYPE_NAME: //"6"
                     lineType = univers.findLType(cvp.getStringValue());
@@ -208,6 +214,39 @@ public class DXFText extends DXFEntity {
         }
         DXFText e = new DXFText(x, y, value, rotation, thickness, height, align, style, c, l, angle, zoomfactor, visibility, lineType);
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        e.setStartingLineNumber(sln);
+        log.debug(e.toString(x, y, value, rotation, thickness, height, align, style, c, angle, zoomfactor, visibility));
         return e;
+    }
+
+    public String toString(double x, double y, String value, double rotation, double thickness, double height, double align, String style, int c, double angle, double zoomfactor, int visibility) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFText [");
+        s.append("x: ");
+        s.append(x + ", ");
+        s.append("y: ");
+        s.append(y + ", ");
+        s.append("value: ");
+        s.append(value + ", ");
+        s.append("rotation: ");
+        s.append(rotation + ", ");
+        s.append("thickness: ");
+        s.append(thickness + ", ");
+        s.append("height: ");
+        s.append(height + ", ");
+        s.append("align: ");
+        s.append(align + ", ");
+        s.append("style: ");
+        s.append(style + ", ");
+        s.append("color: ");
+        s.append(c + ", ");
+        s.append("angle: ");
+        s.append(angle + ", ");
+        s.append("zoomfactor: ");
+        s.append(zoomfactor + ", ");
+        s.append("visibility: ");
+        s.append(visibility);
+        s.append("]");
+        return s.toString();
     }
 }

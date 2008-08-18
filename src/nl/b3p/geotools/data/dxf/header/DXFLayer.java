@@ -6,14 +6,17 @@ import java.util.Vector;
 
 
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFConstants;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFLayer extends DXFEntity implements DXFConstants {
 
+    private static final Log log = LogFactory.getLog(DXFLayer.class);
     public int _flag = 0;
     public String _nom;
     public Vector<DXFEntity> theEnt = new Vector<DXFEntity>();
@@ -44,6 +47,8 @@ public class DXFLayer extends DXFEntity implements DXFConstants {
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
         boolean doLoop = true;
         while (doLoop) {
             cvp = new DXFCodeValuePair();
@@ -69,7 +74,7 @@ public class DXFLayer extends DXFEntity implements DXFConstants {
                     color = cvp.getShortValue();
                     break;
                 case INT_1:
-                    f = cvp.getIntValue();
+                    f = cvp.getShortValue();
                     break;
                 default:
             }
@@ -79,7 +84,21 @@ public class DXFLayer extends DXFEntity implements DXFConstants {
         if (color < 0) {
             l.setVisible(false);
         }
+        log.debug(l.toString(name, color, f));
         return l;
+    }
+
+    public String toString(String name, int color, int f) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFLayer [");
+        s.append("name: ");
+        s.append(name + ", ");
+        s.append("color: ");
+        s.append(color + ", ");
+        s.append("f: ");
+        s.append(f);
+        s.append("]");
+        return s.toString();
     }
 }
 

@@ -6,14 +6,17 @@ import java.io.IOException;
 
 
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.entities.DXFPoint;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFConstants;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFHeader implements DXFConstants {
 
+    private static final Log log = LogFactory.getLog(DXFHeader.class);
     public DXFPoint _LIMMIN;
     public DXFPoint _LIMMAX;
     public DXFPoint _EXTMIN;
@@ -48,6 +51,8 @@ public class DXFHeader implements DXFConstants {
         String version = "AC1006";
 
 
+        int sln = br.getLineNumber();
+        log.debug(">Enter at line: " + sln);
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
@@ -100,6 +105,10 @@ public class DXFHeader implements DXFConstants {
                                     break;
                                 }
                                 break;
+                            case VARIABLE_NAME:
+                                doLoop2 = false;
+                                br.reset();
+                                break;
                             case X_1:
                                 x = cvp.getDoubleValue();
                                 break;
@@ -110,7 +119,7 @@ public class DXFHeader implements DXFConstants {
                                 tversion = cvp.getStringValue();
                                 break;
                             case INT_1:
-                                tfillmode = cvp.getIntValue();
+                                tfillmode = cvp.getShortValue();
                                 break;
                             default:
                         }
@@ -134,10 +143,31 @@ public class DXFHeader implements DXFConstants {
             }
         }
 
-        return new DXFHeader(new DXFPoint(limmin, -1, null, 1, 1),
+        DXFHeader e = new DXFHeader(new DXFPoint(limmin, -1, null, 1, 1),
                 new DXFPoint(limmax, -1, null, 1, 1),
                 new DXFPoint(extmin, -1, null, 1, 1),
                 new DXFPoint(extmax, -1, null, 1, 1),
                 fillmode, version);
+        log.debug(e.toString(limmin, limmax, extmin, extmax, fillmode, version));
+        return e;
+    }
+
+    public String toString(Point2D.Double limmin, Point2D.Double limmax, Point2D.Double extmin, Point2D.Double extmax, int fillmode, String version) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFHeader [");
+        s.append("limmin: ");
+        s.append(limmin + ", ");
+        s.append("limmax: ");
+        s.append(limmax + ", ");
+        s.append("extmin: ");
+        s.append(extmin + ", ");
+        s.append("extmax: ");
+        s.append(extmax + ", ");
+        s.append("fillmode: ");
+        s.append(fillmode + ",");
+        s.append("version: ");
+        s.append(version);
+        s.append("]");
+        return s.toString();
     }
 }

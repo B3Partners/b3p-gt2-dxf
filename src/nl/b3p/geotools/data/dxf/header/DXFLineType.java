@@ -8,10 +8,13 @@ import java.util.Vector;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFLineType {
 
+    private static final Log log = LogFactory.getLog(DXFLineType.class);
     private float _motif[] = parseTxt("_");
     public String _name = "myLineType.0";                       // 2
     public String _value = "";					// 3
@@ -41,6 +44,8 @@ public class DXFLineType {
         Vector<Float> spacing = new Vector<Float>();
         float count = 0, length = 0;
 
+        int sln = br.getLineNumber();
+        log.debug(">Enter at line: " + sln);
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
@@ -56,7 +61,7 @@ public class DXFLineType {
                 break;
             }
 
-             switch (gc) {
+            switch (gc) {
                 case TYPE:
                 case VARIABLE_NAME:
                     br.reset();
@@ -69,7 +74,7 @@ public class DXFLineType {
                     value = cvp.getStringValue();
                     break;
                 case INT_4:
-                    count = cvp.getIntValue();
+                    count = cvp.getShortValue();
                     break;
                 case DOUBLE_1:
                     length = (float) cvp.getDoubleValue();
@@ -86,8 +91,25 @@ public class DXFLineType {
         if (value.equals("") && name.equals("")) {
             return null;
         } else {
-            return new DXFLineType(name, value, length, count, spacing);
+            DXFLineType e = new DXFLineType(name, value, length, count, spacing);
+            log.debug(e.toString(name, value, length, count));
+            return e;
         }
+    }
+
+    public String toString(String name, String value, float length, float count) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFLineType [");
+        s.append("name: ");
+        s.append(name + ", ");
+        s.append("value: ");
+        s.append(value + ", ");
+        s.append("length: ");
+        s.append(length + ", ");
+        s.append("count: ");
+        s.append(count);
+        s.append("]");
+        return s.toString();
     }
 
     public static float[] parseTxt(String s) {

@@ -4,14 +4,17 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.util.Vector;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFConstants;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFBlocks implements DXFConstants {
+    private static final Log log = LogFactory.getLog(DXFBlocks.class);
 
     public Vector<DXFBlock> theBlocks = new Vector<DXFBlock>();
 
@@ -30,6 +33,8 @@ public class DXFBlocks implements DXFConstants {
 
         Vector<DXFBlock> sBlocks = new Vector<DXFBlock>();
 
+        int sln = br.getLineNumber();
+        log.debug(">Enter at line: " + sln);
 
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
@@ -62,6 +67,18 @@ public class DXFBlocks implements DXFConstants {
             }
 
         }
-        return new DXFBlocks(sBlocks);
+        DXFBlocks e = new DXFBlocks(sBlocks);
+        log.debug(e.toString(sBlocks.size()));
+        return e;
     }
+    
+    public String toString(int numEntities) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFBlocks [");
+        s.append("numEntities: ");
+        s.append(numEntities);
+        s.append("]");
+        return s.toString();
+    }
+    
 }

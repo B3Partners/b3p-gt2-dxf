@@ -1,6 +1,6 @@
 package nl.b3p.geotools.data.dxf.entities;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.awt.geom.GeneralPath;
 import java.io.EOFException;
 import java.io.IOException;
@@ -14,9 +14,12 @@ import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFPolyline extends DXFEntity {
 
+    private static final Log log = LogFactory.getLog(DXFPolyline.class);
     private static final long serialVersionUID = 1L;
     public String _name = "myPolyline.0";
     public int _flag = 0;
@@ -60,6 +63,9 @@ public class DXFPolyline extends DXFEntity {
         DXFPolyline p = null;
         DXFLayer l = null;
 
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
+
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
@@ -92,13 +98,13 @@ public class DXFPolyline extends DXFEntity {
                     lineType = univers.findLType(cvp.getStringValue());
                     break;
                 case COLOR: //"62"
-                    c = cvp.getIntValue();
+                    c = cvp.getShortValue();
                     break;
                 case INT_1: //"70"
-                    flag = cvp.getIntValue();
+                    flag = cvp.getShortValue();
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getIntValue();
+                    visibility = cvp.getShortValue();
                     break;
                 default:
                     break;
@@ -107,7 +113,26 @@ public class DXFPolyline extends DXFEntity {
         }
         DXFPolyline e = new DXFPolyline(name, flag, c, l, lv, visibility, lineType, DXFTables.defaultThickness);
         e.setType(DXFEntity.TYPE_LINE);
+        e.setStartingLineNumber(sln);
+        log.debug(e.toString(name, flag, c, visibility, DXFTables.defaultThickness));
         return e;
+    }
+
+    public String toString(String name, int flag, int c, int visibility, double thickness) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFPolyline [");
+        s.append("name: ");
+        s.append(name + ", ");
+        s.append("flag: ");
+        s.append(flag + ", ");
+        s.append("color: ");
+        s.append(c + ", ");
+        s.append("visibility: ");
+        s.append(visibility + ", ");
+        s.append("thickness: ");
+        s.append(thickness);
+        s.append("]");
+        return s.toString();
     }
 }
 

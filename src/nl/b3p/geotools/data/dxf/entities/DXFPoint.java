@@ -1,6 +1,6 @@
 package nl.b3p.geotools.data.dxf.entities;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.awt.geom.Point2D;
 import java.io.EOFException;
 import java.io.IOException;
@@ -12,9 +12,12 @@ import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFPoint extends DXFEntity {
 
+    private static final Log log = LogFactory.getLog(DXFPoint.class);
     public Point2D.Double _point = new Point2D.Double(0, 0);
 
     public DXFPoint(Point2D.Double p, int c, DXFLayer l, int visibility, float thickness) {
@@ -70,6 +73,9 @@ public class DXFPoint extends DXFEntity {
         int visibility = 0, c = -1;
         double x = 0, y = 0, thickness = 0;
 
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
+
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
@@ -102,10 +108,10 @@ public class DXFPoint extends DXFEntity {
                     y = cvp.getDoubleValue();
                     break;
                 case COLOR: //"62"
-                    c = cvp.getIntValue();
+                    c = cvp.getShortValue();
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getIntValue();
+                    visibility = cvp.getShortValue();
                     break;
                 case THICKNESS: //"39"
                     thickness = cvp.getDoubleValue();
@@ -117,6 +123,33 @@ public class DXFPoint extends DXFEntity {
         }
         DXFPoint e = new DXFPoint(x, y, c, l, visibility, thickness);
         e.setType(DXFEntity.TYPE_POINT);
+        e.setStartingLineNumber(sln);
+        log.debug(e.toString());
         return e;
+    }
+
+    public String toString() {
+        StringBuffer s = new StringBuffer();
+        s.append(" [");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append("]");
+        return s.toString();
     }
 }

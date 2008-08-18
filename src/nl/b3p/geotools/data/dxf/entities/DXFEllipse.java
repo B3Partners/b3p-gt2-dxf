@@ -1,6 +1,6 @@
 package nl.b3p.geotools.data.dxf.entities;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.awt.geom.Arc2D;
 import java.io.EOFException;
 import java.io.IOException;
@@ -13,8 +13,11 @@ import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFEllipse extends DXFEntity {
+    private static final Log log = LogFactory.getLog(DXFEllipse.class);
 
     private static final long serialVersionUID = 5630853252028026450L;
     public DXFPoint _centre = new DXFPoint();
@@ -42,11 +45,13 @@ public class DXFEllipse extends DXFEntity {
 
     public static DXFEllipse read(DXFLineNumberReader br, DXFUnivers univers) throws NumberFormatException, IOException {
 
-        String ligne, ligne_temp;
         int visibility = 0, c = 0;
         double x = 0, y = 0, x1 = 0, y1 = 0, r = 0, s = 0, e = 0;
         DXFLayer l = null;
         DXFLineType lineType = null;
+
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
 
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
@@ -77,10 +82,10 @@ public class DXFEllipse extends DXFEntity {
                     lineType = univers.findLType(cvp.getStringValue());
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getIntValue();
+                    visibility = cvp.getShortValue();
                     break;
                 case COLOR: //"62"
-                    c = cvp.getIntValue();
+                    c = cvp.getShortValue();
                     break;
                 case DOUBLE_1: //"40"
                     r = cvp.getDoubleValue();
@@ -113,6 +118,33 @@ public class DXFEllipse extends DXFEntity {
                 new DXFPoint(x1, y1, c, l, visibility, 1),
                 r, s, e, c, l, visibility, lineType);
         m.setType(DXFEntity.TYPE_UNSUPPORTED);
+        m.setStartingLineNumber(sln);
+        log.debug(m.toString());
         return m;
+    }
+
+    public String toString() {
+        StringBuffer s = new StringBuffer();
+        s.append(" [");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append(": ");
+        s.append(", ");
+        s.append("]");
+        return s.toString();
     }
 }

@@ -1,12 +1,13 @@
 package nl.b3p.geotools.data.dxf.parser;
 
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.Properties;
 import java.util.Vector;
 
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
-import nl.b3p.geotools.data.dxf.parser.DXFColor;
 import nl.b3p.geotools.data.dxf.header.DXFBlock;
 import nl.b3p.geotools.data.dxf.header.DXFBlockReference;
 import nl.b3p.geotools.data.dxf.header.DXFBlocks;
@@ -15,9 +16,14 @@ import nl.b3p.geotools.data.dxf.header.DXFHeader;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
 import nl.b3p.geotools.data.dxf.header.DXFTables;
+import org.apache.commons.io.input.CountingInputStream;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.PropertyConfigurator;
 
 public class DXFUnivers implements DXFConstants {
 
+    private static final Log log = LogFactory.getLog(DXFUnivers.class);
     private Vector<DXFBlockReference> _entForUpdate = new Vector<DXFBlockReference>();
     public Vector<DXFTables> theTables = new Vector<DXFTables>();
     public Vector<DXFBlock> theBlocks = new Vector<DXFBlock>();
@@ -27,7 +33,7 @@ public class DXFUnivers implements DXFConstants {
     public DXFUnivers() {
     }
 
-    public void read(DXFLineNumberReader br) throws IOException{
+    public void read(DXFLineNumberReader br) throws IOException {
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
@@ -99,7 +105,7 @@ public class DXFUnivers implements DXFConstants {
                     } else if (name.equals(ENTITIES)) {
                         DXFEntities dxfes = DXFEntities.readEntities(br, this);
                         theEntities.addAll(dxfes.theEntities);
-                        // toevoegen aan layer doen we even niet, waarschijnlijk niet nodig
+                    // toevoegen aan layer doen we even niet, waarschijnlijk niet nodig
 //                        if (o != null && o._refLayer != null) {
 //                            o._refLayer.theEnt.add(o);
 //                        }
@@ -167,7 +173,6 @@ public class DXFUnivers implements DXFConstants {
         return null;
     }
 
-
     public void addRefBlockForUpdate(DXFBlockReference obj) {
         _entForUpdate.add(obj);
     }
@@ -182,5 +187,29 @@ public class DXFUnivers implements DXFConstants {
             }
         }
         _entForUpdate.removeAllElements();
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        Class c = DXFUnivers.class;
+        URL url = c.getResource("/log4j.properties");
+        Properties p = new Properties();
+        p.load(url.openStream());
+        PropertyConfigurator.configure(p);
+        log.info("logging configured!");
+        
+        
+        URL url2 = c.getResource("/VM50.dxf");
+        CountingInputStream cis = new CountingInputStream(url2.openStream());
+        DXFLineNumberReader lnr = new DXFLineNumberReader(new InputStreamReader(cis));
+        DXFUnivers theUnivers = new DXFUnivers();
+        theUnivers.read(lnr);
+        Vector<DXFEntity> theEntities = theUnivers.theEntities;
+        if (theEntities != null) {
+            theEntities = new Vector<DXFEntity>();
+        }
+
+//        String version = theUnivers._header._ACADVER;
+
     }
 }

@@ -9,10 +9,13 @@ import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFConstants;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
-import nl.b3p.geotools.data.dxf.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class DXFTables implements DXFConstants {
 
+    private static final Log log = LogFactory.getLog(DXFTables.class);
     public static final double defaultThickness = 1.0f;
     public static final float defautMotif[] = {1.0f, 0.0f};
     private static final float zoomDash[] = DXFLineType.parseTxt("_");
@@ -35,6 +38,8 @@ public class DXFTables implements DXFConstants {
         Vector<DXFLayer> sLayers = new Vector<DXFLayer>();
         Vector<DXFLineType> sLineTypes = new Vector<DXFLineType>();
 
+        int sln = br.getLineNumber();
+        log.debug(">Enter at line: " + sln);
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
@@ -64,11 +69,15 @@ public class DXFTables implements DXFConstants {
                     break;
             }
         }
-        return new DXFTables(sLayers, sLineTypes);
+        DXFTables e = new DXFTables(sLayers, sLineTypes);
+        log.debug(e.toString(sLayers.size(), sLineTypes.size()));
+        return e;
     }
 
     public static void readTable(DXFLineNumberReader br, Vector<DXFLayer> sLayers, Vector<DXFLineType> sLineTypes) throws IOException {
 
+        int sln = br.getLineNumber();
+        log.debug(">>Enter at line: " + sln);
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
@@ -108,5 +117,16 @@ public class DXFTables implements DXFConstants {
             }
 
         }
+    }
+
+    public String toString(int numLayers, int numLineTypes) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFTables [");
+        s.append("numLayers: ");
+        s.append(numLayers + ", ");
+        s.append("numLineTypes: ");
+        s.append(numLineTypes);
+        s.append("]");
+        return s.toString();
     }
 }
