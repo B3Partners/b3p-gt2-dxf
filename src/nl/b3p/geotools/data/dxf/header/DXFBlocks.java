@@ -14,8 +14,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class DXFBlocks implements DXFConstants {
-    private static final Log log = LogFactory.getLog(DXFBlocks.class);
 
+    private static final Log log = LogFactory.getLog(DXFBlocks.class);
     public Vector<DXFBlock> theBlocks = new Vector<DXFBlock>();
 
     public DXFBlocks() {
@@ -54,10 +54,11 @@ public class DXFBlocks implements DXFConstants {
 
             switch (gc) {
                 case TYPE:
-                    String tableType = cvp.getStringValue();
-                    if (tableType.equals(ENDSEC)) {
+                    String type = cvp.getStringValue();
+                    if (type.equals(ENDSEC)) {
+                        doLoop = false;
                         break;
-                    } else if (tableType.equals(BLOCK)) {
+                    } else if (type.equals(BLOCK)) {
                         DXFBlock block = DXFBlock.read(br, univers);
                         sBlocks.add(block);
                     }
@@ -69,9 +70,10 @@ public class DXFBlocks implements DXFConstants {
         }
         DXFBlocks e = new DXFBlocks(sBlocks);
         log.debug(e.toString(sBlocks.size()));
+        log.debug(">Exit at line: " + br.getLineNumber());
         return e;
     }
-    
+
     public String toString(int numEntities) {
         StringBuffer s = new StringBuffer();
         s.append("DXFBlocks [");
@@ -80,5 +82,4 @@ public class DXFBlocks implements DXFConstants {
         s.append("]");
         return s.toString();
     }
-    
 }

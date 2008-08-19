@@ -108,6 +108,7 @@ public class DXFBlock extends DXFEntity implements DXFConstants {
         }
         DXFBlock e = new DXFBlock(x, y, flag, name, sEnt, DXFColor.getDefaultColorIndex(), l);
         log.debug(e.toString(x, y, flag, name, sEnt.size(), DXFColor.getDefaultColorIndex()));
+        log.debug(">Exit at line: " + br.getLineNumber());
         return e;
     }
 

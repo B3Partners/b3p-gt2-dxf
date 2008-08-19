@@ -85,6 +85,7 @@ public class DXFLayer extends DXFEntity implements DXFConstants {
             l.setVisible(false);
         }
         log.debug(l.toString(name, color, f));
+        log.debug(">Exit at line: " + br.getLineNumber());
         return l;
     }
 

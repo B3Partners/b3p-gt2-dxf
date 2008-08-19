@@ -88,6 +88,7 @@ public class DXFLineType {
 
         }
 
+        log.debug(">Exit at line: " + br.getLineNumber());
         if (value.equals("") && name.equals("")) {
             return null;
         } else {

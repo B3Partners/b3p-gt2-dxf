@@ -216,6 +216,7 @@ public class DXFText extends DXFEntity {
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
         e.setStartingLineNumber(sln);
         log.debug(e.toString(x, y, value, rotation, thickness, height, align, style, c, angle, zoomfactor, visibility));
+        log.debug(">Exit at line: " + br.getLineNumber());
         return e;
     }
 

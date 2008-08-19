@@ -115,6 +115,7 @@ public class DXFPolyline extends DXFEntity {
         e.setType(DXFEntity.TYPE_LINE);
         e.setStartingLineNumber(sln);
         log.debug(e.toString(name, flag, c, visibility, DXFTables.defaultThickness));
+        log.debug(">Exit at line: " + br.getLineNumber());
         return e;
     }
 

@@ -65,13 +65,10 @@ public class DXFEntities implements DXFConstants {
                 case TYPE:
                     DXFEntity dxfe = null;
                     String type = cvp.getStringValue();
-                    if (type.equals(ENDSEC)) {
+                    if (type.equals(ENDSEC) ||
+                            type.equals(ENDBLK)) {
                         doLoop = false;
                         break;
-//                    } else if (type.equals(ATTDEF)) {
-//                        dxfe = new DXFPoint();
-//                    } else if (type.equals(ENDBLK)) {
-//                        dxfe = new DXFPoint();
                     } else if (type.equals("LINE")) {
                         dxfe = DXFLine.read(br, univers);
                     } else if (type.equals("ARC")) {
@@ -110,6 +107,7 @@ public class DXFEntities implements DXFConstants {
         }
         DXFEntities e = new DXFEntities(sEnt);
         log.debug(e.toString(sEnt.size()));
+        log.debug(">Exit at line: " + br.getLineNumber());
         return e;
     }
     

@@ -71,6 +71,7 @@ public class DXFTables implements DXFConstants {
         }
         DXFTables e = new DXFTables(sLayers, sLineTypes);
         log.debug(e.toString(sLayers.size(), sLineTypes.size()));
+        log.debug(">Exit at line: " + br.getLineNumber());
         return e;
     }
 

@@ -149,6 +149,7 @@ public class DXFHeader implements DXFConstants {
                 new DXFPoint(extmax, -1, null, 1, 1),
                 fillmode, version);
         log.debug(e.toString(limmin, limmax, extmin, extmax, fillmode, version));
+        log.debug(">Exit at line: " + br.getLineNumber());
         return e;
     }
 

@@ -113,6 +113,7 @@ public class DXFLine extends DXFEntity {
         e.setType(DXFEntity.TYPE_LINE);
         e.setStartingLineNumber(sln);
         log.debug(e.toString(x1, y1, x2, y2, c, visibility, thickness));
+        log.debug(">Exit at line: " + br.getLineNumber());
         return e;
     }
 
