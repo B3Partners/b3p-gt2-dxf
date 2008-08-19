@@ -60,7 +60,6 @@ public class DXFPolyline extends DXFEntity {
         int visibility = 0, flag = 0, c = -1;
         DXFLineType lineType = null;
         Vector<DXFVertex> lv = new Vector<DXFVertex>();
-        DXFPolyline p = null;
         DXFLayer l = null;
 
         int sln = br.getLineNumber();
@@ -84,9 +83,14 @@ public class DXFPolyline extends DXFEntity {
             switch (gc) {
                 case TYPE:
                     String type = cvp.getStringValue();
-                    // geldt voor alle waarden van type
-                    br.reset();
-                    doLoop = false;
+                    if (SEQEND.equals(type)) {
+                        doLoop = false;
+                    } else if (VERTEX.equals(type)) {
+                        lv.add(DXFVertex.read(br, univers));
+                    } else {
+                        br.reset();
+                        doLoop = false;
+                    }
                     break;
                 case NAME: //"2"
                     name = cvp.getStringValue();
@@ -114,18 +118,20 @@ public class DXFPolyline extends DXFEntity {
         DXFPolyline e = new DXFPolyline(name, flag, c, l, lv, visibility, lineType, DXFTables.defaultThickness);
         e.setType(DXFEntity.TYPE_LINE);
         e.setStartingLineNumber(sln);
-        log.debug(e.toString(name, flag, c, visibility, DXFTables.defaultThickness));
-        log.debug(">Exit at line: " + br.getLineNumber());
+        log.debug(e.toString(name, flag, lv.size(), c, visibility, DXFTables.defaultThickness));
+        log.debug(">>Exit at line: " + br.getLineNumber());
         return e;
     }
 
-    public String toString(String name, int flag, int c, int visibility, double thickness) {
+    public String toString(String name, int flag, int numVert, int c, int visibility, double thickness) {
         StringBuffer s = new StringBuffer();
         s.append("DXFPolyline [");
         s.append("name: ");
         s.append(name + ", ");
         s.append("flag: ");
         s.append(flag + ", ");
+        s.append("numVert: ");
+        s.append(numVert + ", ");
         s.append("color: ");
         s.append(c + ", ");
         s.append("visibility: ");

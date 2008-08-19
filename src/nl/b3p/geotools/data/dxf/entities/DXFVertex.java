@@ -19,7 +19,7 @@ public class DXFVertex extends DXFPoint {
     private static final long serialVersionUID = 1L;
     protected double _bulge = 0;
 
-    public DXFVertex(double x, double y, double b, int c, DXFLayer l, DXFPolyline refPolyline, int visibility) {
+    public DXFVertex(double x, double y, double b, int c, DXFLayer l, int visibility) {
         super(x, y, c, l, visibility, 1);
         _bulge = b;
     }
@@ -40,7 +40,7 @@ public class DXFVertex extends DXFPoint {
         _bulge = orig._bulge;
     }
 
-    public static DXFVertex read(DXFLineNumberReader br, DXFUnivers univers, DXFPolyline p) throws IOException {
+    public static DXFVertex read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
         DXFLayer l = null;
         int visibility = 0, c = -1;
         double x = 0, y = 0, b = 0;
@@ -94,35 +94,27 @@ public class DXFVertex extends DXFPoint {
 
         }
 
-        DXFVertex e = new DXFVertex(x, y, b, c, l, p, visibility);
-        e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        DXFVertex e = new DXFVertex(x, y, b, c, l, visibility);
+        e.setType(DXFEntity.TYPE_POLYGON);
         e.setStartingLineNumber(sln);
-
-        log.debug(e.toString());
+        log.debug(e.toString(b, x, y, c, visibility));
+        log.debug(">Exit at line: " + br.getLineNumber());
         return e;
     }
 
-    public String toString() {
+    public String toString(double b, double x, double y, int c, int visibility) {
         StringBuffer s = new StringBuffer();
-        s.append(" [");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
+        s.append("DXFVertex [");
+        s.append("b: ");
+        s.append(b + ", ");
+        s.append("x: ");
+        s.append(x + ", ");
+        s.append("y: ");
+        s.append(y + ", ");
+        s.append("c: ");
+        s.append(c + ", ");
+        s.append("visibility: ");
+        s.append(visibility);
         s.append("]");
         return s.toString();
     }

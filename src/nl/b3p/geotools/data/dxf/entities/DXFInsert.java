@@ -113,7 +113,7 @@ public class DXFInsert extends DXFBlockReference {
 
     public String toString() {
         StringBuffer s = new StringBuffer();
-        s.append(" [");
+        s.append("DXFInsert [");
         s.append(": ");
         s.append(", ");
         s.append(": ");

@@ -15,8 +15,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class DXFArc extends DXFEntity {
-    private static final Log log = LogFactory.getLog(DXFArc.class);
 
+    private static final Log log = LogFactory.getLog(DXFArc.class);
     public DXFPoint _point = new DXFPoint();
     public double _radius = 0;
     protected double _angle1 = 0;
@@ -114,33 +114,39 @@ public class DXFArc extends DXFEntity {
 
         }
         DXFArc e = new DXFArc(a1, a2, new DXFPoint(x, y, c, null, visibility, 1), r, lineType, c, l, visibility, thickness);
-        e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        e.setType(DXFEntity.TYPE_POLYGON);
         e.setStartingLineNumber(sln);
-        log.debug(e.toString());
+        log.debug(e.toString(c, r, x, y, a1, a2, visibility, thickness));
+        log.debug(">>Exit at line: " + br.getLineNumber());
         return e;
     }
 
-    public String toString() {
+    public String toString(int c,
+            double r,
+            double x,
+            double y,
+            double a1,
+            double a2,
+            int visibility,
+            double thickness) {
         StringBuffer s = new StringBuffer();
-        s.append(" [");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
+        s.append("DXFArc [");
+        s.append("color: ");
+        s.append(c + ", ");
+        s.append("r: ");
+        s.append(r + ", ");
+        s.append("x: ");
+        s.append(x + ", ");
+        s.append("y: ");
+        s.append(y + ", ");
+        s.append("a1: ");
+        s.append(a1 + ", ");
+        s.append("a2: ");
+        s.append(a2 + ", ");
+        s.append("visibility: ");
+        s.append(visibility + ", ");
+        s.append("thickness: ");
+        s.append(thickness);
         s.append("]");
         return s.toString();
     }

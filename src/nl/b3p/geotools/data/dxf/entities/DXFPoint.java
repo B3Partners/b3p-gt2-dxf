@@ -124,31 +124,24 @@ public class DXFPoint extends DXFEntity {
         DXFPoint e = new DXFPoint(x, y, c, l, visibility, thickness);
         e.setType(DXFEntity.TYPE_POINT);
         e.setStartingLineNumber(sln);
-        log.debug(e.toString());
+        log.debug(e.toString(x, y, visibility, c, thickness));
+        log.debug(">>Exit at line: " + br.getLineNumber());
         return e;
     }
 
-    public String toString() {
+    public String toString(double x, double y, int visibility, int c, double thickness) {
         StringBuffer s = new StringBuffer();
-        s.append(" [");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
+        s.append("DXFPoint [");
+        s.append("x: ");
+        s.append(x + ", ");
+        s.append("y: ");
+        s.append(y + ", ");
+        s.append("visibility: ");
+        s.append(visibility + ", ");
+        s.append("color: ");
+        s.append(c + ", ");
+        s.append("thickness: ");
+        s.append(thickness);
         s.append("]");
         return s.toString();
     }

@@ -44,7 +44,7 @@ public class DXFTrace extends DXFSolid {
 
     public String toString() {
         StringBuffer s = new StringBuffer();
-        s.append(" [");
+        s.append("DXFTrace [");
         s.append(": ");
         s.append(", ");
         s.append(": ");

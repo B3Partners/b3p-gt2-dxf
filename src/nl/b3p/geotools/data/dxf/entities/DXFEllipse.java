@@ -17,8 +17,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class DXFEllipse extends DXFEntity {
-    private static final Log log = LogFactory.getLog(DXFEllipse.class);
 
+    private static final Log log = LogFactory.getLog(DXFEllipse.class);
     private static final long serialVersionUID = 5630853252028026450L;
     public DXFPoint _centre = new DXFPoint();
     public DXFPoint _point = new DXFPoint();
@@ -117,33 +117,34 @@ public class DXFEllipse extends DXFEntity {
                 new DXFPoint(x, y, c, l, visibility, 1),
                 new DXFPoint(x1, y1, c, l, visibility, 1),
                 r, s, e, c, l, visibility, lineType);
-        m.setType(DXFEntity.TYPE_UNSUPPORTED);
+        m.setType(DXFEntity.TYPE_POLYGON);
         m.setStartingLineNumber(sln);
-        log.debug(m.toString());
+        log.debug(m.toString(visibility, c, r, s, e, x, y, x1, y1));
+        log.debug(">>Exit at line: " + br.getLineNumber());
         return m;
     }
 
-    public String toString() {
+    public String toString(int visibility, int c, double r, double t, double e, double x, double y, double x1, double y1) {
         StringBuffer s = new StringBuffer();
-        s.append(" [");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
+        s.append("DXFEllipse [");
+        s.append("visibility: ");
+        s.append(visibility + ", ");
+        s.append("color: ");
+        s.append(c + ", ");
+        s.append("r: ");
+        s.append(r + ", ");
+        s.append("s: ");
+        s.append(t + ", ");
+        s.append("e: ");
+        s.append(e + ", ");
+        s.append("x: ");
+        s.append(x + ", ");
+        s.append("y: ");
+        s.append(y + ", ");
+        s.append("x1: ");
+        s.append(x1 + ", ");
+        s.append("y1: ");
+        s.append(y1);
         s.append("]");
         return s.toString();
     }

@@ -17,8 +17,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class DXFSolid extends DXFEntity {
-    private static final Log log = LogFactory.getLog(DXFSolid.class);
 
+    private static final Log log = LogFactory.getLog(DXFSolid.class);
     private static final long serialVersionUID = 2567756283532200546L;
     public DXFPoint _p1 = new DXFPoint();
     public DXFPoint _p2 = new DXFPoint();
@@ -140,33 +140,48 @@ public class DXFSolid extends DXFEntity {
                 l,
                 visibility,
                 lineType);
-        e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        e.setType(DXFEntity.TYPE_POLYGON);
         e.setStartingLineNumber(sln);
-        log.debug(e.toString());
+        log.debug(e.toString(p1_x, p2_x, p3_x, p4_x, p1_y, p2_y, p3_y, p4_y, thickness, c, visibility));
+        log.debug(">>Exit at line: " + br.getLineNumber());
         return e;
     }
 
-    public String toString() {
+    public String toString(double p1_x,
+            double p2_x,
+            double p3_x,
+            double p4_x,
+            double p1_y,
+            double p2_y,
+            double p3_y,
+            double p4_y,
+            double thickness,
+            int c,
+            int visibility) {
         StringBuffer s = new StringBuffer();
-        s.append(" [");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
+        s.append("DXFSolid [");
+        s.append("p1_x: ");
+        s.append(p1_x + ", ");
+        s.append("p2_x: ");
+        s.append(p2_x + ", ");
+        s.append("p3_x: ");
+        s.append(p3_x + ", ");
+        s.append("p4_x: ");
+        s.append(p4_x + ", ");
+        s.append("p1_y: ");
+        s.append(p1_y + ", ");
+        s.append("p2_y: ");
+        s.append(p2_y + ", ");
+        s.append("p3_y: ");
+        s.append(p3_y + ", ");
+        s.append("p4_y: ");
+        s.append(p4_y + ", ");
+        s.append("thickness: ");
+        s.append(thickness + ", ");
+        s.append("color: ");
+        s.append(c + ", ");
+        s.append("visibility: ");
+        s.append(visibility);
         s.append("]");
         return s.toString();
     }

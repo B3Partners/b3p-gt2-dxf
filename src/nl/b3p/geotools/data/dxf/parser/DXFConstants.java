@@ -17,13 +17,26 @@ public interface DXFConstants {
     public static final String BLOCK = "BLOCK";
     public static final String ENDBLK = "ENDBLK";
     public static final String ENTITIES = "ENTITIES";
+    public static final String LINE = "LINE";
+    public static final String ARC = "ARC";
+    public static final String CIRCLE = "CIRCLE";
+    public static final String POLYLINE = "POLYLINE";
+    public static final String VERTEX = "VERTEX";
+    public static final String SEQEND = "SEQEND";
+    public static final String LWPOLYLINE = "LWPOLYLINE";
+    public static final String POINT = "POINT";
+    public static final String SOLID = "SOLID";
+    public static final String TEXT = "TEXT";
+    public static final String MTEXT = "MTEXT";
+    public static final String INSERT = "INSERT";
+    public static final String DIMENSION = "DIMENSION";
+    public static final String TRACE = "TRACE";
+    public static final String ELLIPSE = "ELLIPSE";
     public static final String CLASSES = "CLASSES";
     public static final String ENDSEC = "ENDSEC";
-    
-    // not supported
+    /* not supported */
     public static final String OBJECTS = "OBJECTS";
     public static final String THUMBNAILIMAGE = "THUMBNAILIMAGE";
-    
     /* Supported header variables */
     public static final String $LIMMIN = "$LIMMIN";
     public static final String $LIMMAX = "$LIMMAX";
@@ -31,14 +44,19 @@ public interface DXFConstants {
     public static final String $EXTMAX = "$EXTMAX";
     public static final String $ACADVER = "$ACADVER";
     public static final String $FILLMODE = "$FILLMODE";
-    
     /* layer constants */
     public static final short LAYER_FROZEN = 1;  /* layer is frozen */
+
     public static final short LAYER_AUTO_FROZEN = 2;  /* layer automatically frozen in all VIEWPORTS */
+
     public static final short LAYER_LOCKED = 4;  /* layer is locked */
+
     public static final short LAYER_XREF = 8;  /* layer is from XREF */
+
     public static final short LAYER_XREF_FOUND = 16;  /* layer is from known XREF */
+
     public static final short LAYER_USED = 32;  /* layer was used */
+
     public static final short LAYER_INVISIBLE = 16384;  /* (own:) layer is invisible */
-    
+
 }

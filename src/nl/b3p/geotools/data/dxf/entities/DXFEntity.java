@@ -16,11 +16,12 @@ import com.vividsolutions.jts.geom.TopologyException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import nl.b3p.geotools.data.dxf.parser.DXFConstants;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public abstract class DXFEntity {
+public abstract class DXFEntity implements DXFConstants  {
     private static final Log log = LogFactory.getLog(DXFEntity.class);
 
     /* feature write */

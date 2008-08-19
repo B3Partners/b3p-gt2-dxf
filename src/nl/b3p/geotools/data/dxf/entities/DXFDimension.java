@@ -17,8 +17,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class DXFDimension extends DXFBlockReference {
-    private static final Log log = LogFactory.getLog(DXFDimension.class);
 
+    private static final Log log = LogFactory.getLog(DXFDimension.class);
     public double _angle = 0;//50
     public String _dimension = "<>";//1
     public DXFPoint _point_WCS = new DXFPoint();//10,20
@@ -105,35 +105,32 @@ public class DXFDimension extends DXFBlockReference {
         d = new DXFDimension(angle, dimension, x, y, refBlock, nomBlock, l, visibility, c, lineType);
         d.setType(DXFEntity.TYPE_UNSUPPORTED);
         d.setStartingLineNumber(sln);
- 
+
         if ((refBlock == null)) {
             univers.addRefBlockForUpdate(d);
         }
-        log.debug(d.toString());
+        log.debug(d.toString(dimension, angle, nomBlock, x, y, visibility, c));
+        log.debug(">>Exit at line: " + br.getLineNumber());
         return d;
     }
 
-    public String toString() {
+    public String toString(String dimension, double angle, String nomBlock, double x, double y, int visibility, int c) {
         StringBuffer s = new StringBuffer();
-        s.append(" [");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
+        s.append("DXFDimension [");
+        s.append("dimension: ");
+        s.append(dimension + ", ");
+        s.append("angle: ");
+        s.append(angle + ", ");
+        s.append("nameBlock: ");
+        s.append(nomBlock + ", ");
+        s.append("x: ");
+        s.append(x + ", ");
+        s.append("y: ");
+        s.append(y + ", ");
+        s.append("visibility: ");
+        s.append(visibility + ", ");
+        s.append("color: ");
+        s.append(c);
         s.append("]");
         return s.toString();
     }

@@ -105,6 +105,7 @@ public class DXFCircle extends DXFEntity {
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
         e.setStartingLineNumber(sln);
         log.debug(e.toString(x, y, c, visibility, thickness));
+        log.debug(">>Exit at line: " + br.getLineNumber());
         return e;
     }
 

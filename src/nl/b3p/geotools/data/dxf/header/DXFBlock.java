@@ -73,18 +73,16 @@ public class DXFBlock extends DXFEntity implements DXFConstants {
                     String type = cvp.getStringValue();
                     if (ENDBLK.equals(type)) {
                         doLoop = false;
-                        break;
                     } else if (ENDSEC.equals(type)) {
                         // hack voor als ENDBLK ontbreekt
                         doLoop = false;
                         br.reset();
-                        break;
                     } else {
                         // check of dit entities zijn
                         br.reset();
                         sEnt.addAll(DXFEntities.readEntities(br, univers).theEntities);
-                        break;
                     }
+                    break;
                 case LAYER_NAME:
                     l = univers.findLayer(cvp.getStringValue());
                     break;

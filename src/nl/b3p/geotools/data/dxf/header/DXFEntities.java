@@ -69,31 +69,31 @@ public class DXFEntities implements DXFConstants {
                             type.equals(ENDBLK)) {
                         doLoop = false;
                         break;
-                    } else if (type.equals("LINE")) {
+                    } else if (type.equals(LINE)) {
                         dxfe = DXFLine.read(br, univers);
-                    } else if (type.equals("ARC")) {
+                    } else if (type.equals(ARC)) {
                         dxfe = DXFArc.read(br, univers);
-                    } else if (type.equals("CIRCLE")) {
+                    } else if (type.equals(CIRCLE)) {
                         dxfe = DXFCircle.read(br, univers);
-                    } else if (type.equals("POLYLINE")) {
+                    } else if (type.equals(POLYLINE)) {
                         dxfe = DXFPolyline.read(br, univers);
-                    } else if (type.equals("LWPOLYLINE")) {
+                    } else if (type.equals(LWPOLYLINE)) {
                         dxfe = DXFLwPolyline.read(br, univers);
-                    } else if (type.equals("POINT")) {
+                    } else if (type.equals(POINT)) {
                         dxfe = DXFPoint.read(br, univers);
-                    } else if (type.equals("SOLID")) {
+                    } else if (type.equals(SOLID)) {
                         dxfe = DXFSolid.read(br, univers);
-                    } else if (type.equals("TEXT")) {
+                    } else if (type.equals(TEXT)) {
                         dxfe = DXFText.read(br, univers);
-                    } else if (type.equals("MTEXT")) {
+                    } else if (type.equals(MTEXT)) {
                         dxfe = DXFText.read(br, univers);
-                    } else if (type.equals("INSERT")) {
+                    } else if (type.equals(INSERT)) {
                         dxfe = DXFInsert.read(br, univers);
-                    } else if (type.equals("DIMENSION")) {
+                    } else if (type.equals(DIMENSION)) {
                         dxfe = DXFDimension.read(br, univers);
-                    } else if (type.equals("TRACE")) {
+                    } else if (type.equals(TRACE)) {
                         dxfe = DXFTrace.read(br, univers);
-                    } else if (type.equals("ELLIPSE")) {
+                    } else if (type.equals(ELLIPSE)) {
                         dxfe = DXFEllipse.read(br, univers);
                     }
                     if (dxfe != null) {
