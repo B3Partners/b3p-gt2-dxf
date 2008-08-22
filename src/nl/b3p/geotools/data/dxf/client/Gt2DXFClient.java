@@ -6,9 +6,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Vector;
 import nl.b3p.geotools.data.dxf.DXFDataStore;
-import nl.b3p.geotools.data.dxf.entities.DXFEntity;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.PropertyConfigurator;
@@ -21,74 +19,81 @@ import org.geotools.feature.FeatureIterator;
 import org.geotools.data.postgis.PostgisDataStoreFactory;
 
 public class Gt2DXFClient {
-    
+
     private static final Log log = LogFactory.getLog(Gt2DXFClient.class);
 
-    public static void main(String[] args) throws Exception {   
+    public static void main(String[] args) throws Exception {
         Class c = Gt2DXFClient.class;
         URL url = c.getResource("/log4j.properties");
         Properties p = new Properties();
         p.load(url.openStream());
         PropertyConfigurator.configure(p);
         log.info("logging configured!");
-        
+
         //createPostGIS();
 
         URL url2 = c.getResource("/VM50.dxf");
         processFile(url2);
-        
+
     }
-    
+
     private static void processFile(URL url) throws Exception {
-        
+
         DXFDataStore dataStore = new DXFDataStore(url);
-        String[] typeNames = dataStore.getTypeNames ();
+        String[] typeNames = dataStore.getTypeNames();
         String typeName = typeNames[0];
 
-        log.info( "Reading: "+ typeName );
+        log.info("Reading: " + typeName);
 
-        FeatureSource featureSource = dataStore.getFeatureSource( typeName );
+        FeatureSource featureSource = dataStore.getFeatureSource(typeName);
         FeatureCollection collection = featureSource.getFeatures();
         FeatureIterator iterator = collection.features();
 
-        int count = 0;        
-        int emptyGeometries = 0; int parseErrors = 0;
+        int count = 0;
+        int emptyGeometries = 0;
+        int parseErrors = 0;
         int invalid = 0;
-        int[] typeCounts = new int[3];
-        int[] multiGeometriesTypeCounts = new int[3];
-        
-        try {
-           while( iterator.hasNext() ){
-                Feature feature = iterator.next();
-                
-                Geometry geometry = null;
-                //Geometry geometry = feature.getDefaultGeometry();
-                int i;
-                for(i = 0; geometry == null && i < 3; i++) {
-                    geometry = (Geometry)feature.getAttribute(i);
-                }
-                typeCounts[i-1] = typeCounts[i-1]+1;
-                if(geometry.getNumGeometries() != 1) {
-                    multiGeometriesTypeCounts[i-1] = multiGeometriesTypeCounts[i-1]+1;
-                }
-                if(geometry.isEmpty()) {
-                    ++emptyGeometries;
-                }                
 
-                if(((Boolean)feature.getAttribute(7)).booleanValue()) {
+        try {
+            while (iterator.hasNext()) {
+                Feature feature = iterator.next();
+
+                Geometry geometry = feature.getDefaultGeometry();
+                if (feature != null && geometry != null) {
+                    log.info("----------------------------------------------------");
+                    log.info("geomType: "+ geometry.getGeometryType());
+                    log.info("name: "+ (String) feature.getAttribute(1));
+                    log.info("key: "+ (String) feature.getAttribute(2));
+                    log.info("urlLink: "+ (String) feature.getAttribute(3));
+                    log.info("lineType: "+ (String) feature.getAttribute(4));
+                    log.info("color: "+ (String) feature.getAttribute(5));
+                    log.info("layer: "+ (String) feature.getAttribute(6));
+                    log.info("thickness: "+ (Double) feature.getAttribute(7));
+                    log.info("visible: "+ (Boolean) feature.getAttribute(8));
+                    log.info("lineNumber: "+ (Integer) feature.getAttribute(9));
+                    log.info("parseError: "+ (Boolean) feature.getAttribute(10));
+                    log.info("error: "+ (String) feature.getAttribute(11));
+                }
+
+                if (geometry == null || geometry.isEmpty()) {
+                    ++emptyGeometries;
+                }
+
+                if (((Boolean) feature.getAttribute(10)).booleanValue()) {
                     parseErrors++;
                 }
-                if(!geometry.isValid()) {
+                if (geometry == null || !geometry.isValid()) {
                     invalid++;
                 }
                 count++;
-           }
+            }
         } finally {
-           iterator.close();
+            iterator.close();
         }
 
+        log.info("count: " + count + ", emptyGeometries: " + emptyGeometries + ", parseErrors: " + parseErrors + ", invalid: " + invalid);
     }
-    
+
     private static void createPostGIS() throws IOException {
         Map params = new HashMap();
         params.put(PostgisDataStoreFactory.DBTYPE.key, "postgis");
@@ -99,11 +104,11 @@ public class Gt2DXFClient {
         params.put(PostgisDataStoreFactory.USER.key, "postgres");
         params.put(PostgisDataStoreFactory.PASSWD.key, "***REMOVED***");
 
-        DataStore dataStore=DataStoreFinder.getDataStore(params);
-                
+        DataStore dataStore = DataStoreFinder.getDataStore(params);
+
         String[] typeNames = dataStore.getTypeNames();
-        for(int i = 0; i < typeNames.length; i++) {
-            System.out.println(typeNames[i]);
-        }        
+        for (int i = 0; i < typeNames.length; i++) {
+            log.info(typeNames[i]);
+        }
     }
 }

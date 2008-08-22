@@ -6,8 +6,6 @@ package nl.b3p.geotools.data.dxf;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.Vector;
-import nl.b3p.geotools.data.dxf.entities.DXFEntity;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
@@ -21,17 +19,7 @@ import org.geotools.feature.FeatureType;
 /**
  * DataStore for reading a DXF file produced by Autodesk.
  * 
- * Note that a single DXF file can contain point, line and polygon features.
- * Although many files will only contain a single type, the parser can only 
- * determine this by looking through the entire file - which is not advisable in 
- * a streaming API. The same is true for a file containing only polygons or also 
- * multipolygons etc. 
- * 
- * Therefore always the same feature schema is used:
- * the_geom_point: Point
- * the_geom_line: MultiLineString (getNumGeometries() can be 1) 
- * the_geom_polygon: MultiPolygons (getNumGeometries() can be 1, can contain holes)
- * Where only one of three is not null. The attributes are always the same:
+ * The attributes are always the same:
  * key: String
  * name: String
  * urlLink: String
@@ -39,7 +27,7 @@ import org.geotools.feature.FeatureType;
  * parseError: Boolean
  * error: String
  *  * 
- * @author Matthijs Laan, Chris van Lith B3Partners
+ * @author Chris van Lith B3Partners
  */
 public class DXFDataStore extends AbstractFileDataStore {
 

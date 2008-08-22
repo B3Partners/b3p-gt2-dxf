@@ -5,8 +5,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public final class DXFColor {
-    private static final Log log = LogFactory.getLog(DXFColor.class);
 
+    private static final Log log = LogFactory.getLog(DXFColor.class);
     private static int defaultColor = 0;
     static final Color[] ColorMap = {
         new Color(0xff, 0xff, 0xff), // color 255 white
@@ -305,5 +305,16 @@ public final class DXFColor {
             }
         }
         return defaultColor;
+    }
+
+    public final static String getColorRGB(int index) {
+        Color cc = getColor(index);
+        if (cc == null) {
+            return null;
+        }
+        String red = Integer.toString(cc.getRed());
+        String green = Integer.toString(cc.getGreen());
+        String blue = Integer.toString(cc.getBlue());
+        return red + " " + green + " " + blue;
     }
 }

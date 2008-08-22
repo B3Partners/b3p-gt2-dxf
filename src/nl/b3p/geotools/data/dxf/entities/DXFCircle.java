@@ -1,11 +1,15 @@
 package nl.b3p.geotools.data.dxf.entities;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.awt.geom.Ellipse2D;
 import java.io.EOFException;
 import java.io.IOException;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
@@ -17,8 +21,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class DXFCircle extends DXFEntity {
-    private static final Log log = LogFactory.getLog(DXFCircle.class);
 
+    private static final Log log = LogFactory.getLog(DXFCircle.class);
     private Ellipse2D.Double _e = new Ellipse2D.Double();
     public DXFPoint _point = new DXFPoint();
     public double _radius = 0;
@@ -27,18 +31,19 @@ public class DXFCircle extends DXFEntity {
         super(c, l, visibility, lineType, thickness);
         _point = p;
         _radius = r;
-
+        setName("DXFCircle");
     }
 
     public DXFCircle() {
         super(0, null, 0, null, DXFTables.defaultThickness);
+        setName("DXFCircle");
     }
 
     public DXFCircle(DXFCircle orig) {
-        super(orig._color, orig._refLayer, 0, orig._lineType, orig._thickness);
+        super(orig.getColor(), orig.getRefLayer(), 0, orig.getLineType(), orig.getThickness());
         _point = new DXFPoint(orig._point);
         _radius = orig._radius;
-
+        setName("DXFCircle");
     }
 
     public static DXFCircle read(DXFLineNumberReader br, DXFUnivers univers) throws NumberFormatException, IOException {
@@ -102,24 +107,66 @@ public class DXFCircle extends DXFEntity {
 
         }
         DXFCircle e = new DXFCircle(new DXFPoint(x, y, c, l, visibility, 1), r, lineType, c, l, visibility, thickness);
-        e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        e.setType(DXFEntity.TYPE_LINE);
         e.setStartingLineNumber(sln);
+        e.setUnivers(univers);
         log.debug(e.toString(x, y, c, visibility, thickness));
         log.debug(">>Exit at line: " + br.getLineNumber());
         return e;
+    }
+
+    public Coordinate[] toCoordinateArray() {
+        if (_point == null || _point._point == null || _radius <= 0) {
+            addError("coordinate array can not be created.");
+            return null;
+        }
+        List<Coordinate> lc = new ArrayList<Coordinate>();
+        double startAngle = 0.0;
+        double endAngle = 2 * Math.PI;
+        double segAngle = 2 * Math.PI / DXFUnivers.NUM_OF_SEGMENTS;
+        double angle = startAngle;
+        for (;;) {
+            double x = _point._point.getX() + _radius * Math.cos(angle);
+            double y = _point._point.getY() + _radius * Math.sin(angle);
+            Coordinate c = new Coordinate(x, y);
+            lc.add(c);
+
+            if (angle >= endAngle) {
+                break;
+            }
+            angle += segAngle;
+            if (angle > endAngle) {
+                angle = endAngle;
+            }
+        }
+        return lc.toArray(new Coordinate[]{});
+    }
+
+    @Override
+    public Geometry getGeometry() {
+        Geometry g = super.getGeometry();
+        if (g == null) {
+            Coordinate[] ca = toCoordinateArray();
+            if (ca != null && ca.length>1) {
+                return getUnivers().getGeometryFactory().createLineString(ca);
+           } else {
+                addError("coordinate array faulty, size: " + (ca==null?0:ca.length));
+            }
+        }
+        return g;
     }
 
     public String toString(double x, double y, int c, int visibility, double thickness) {
         StringBuffer s = new StringBuffer();
         s.append("DXFCircle [");
         s.append("x: ");
-        s.append(x+", ");
+        s.append(x + ", ");
         s.append("y: ");
-        s.append(y+", ");
+        s.append(y + ", ");
         s.append("color: ");
-        s.append(c+", ");
+        s.append(c + ", ");
         s.append("visibility: ");
-        s.append(visibility+", ");
+        s.append(visibility + ", ");
         s.append("thickness: ");
         s.append(thickness);
         s.append("]");

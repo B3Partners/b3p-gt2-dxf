@@ -15,14 +15,14 @@ import org.apache.commons.logging.LogFactory;
 public class DXFLineType {
 
     private static final Log log = LogFactory.getLog(DXFLineType.class);
+    public static final String DEFAULT_NAME = "default";
     private float _motif[] = parseTxt("_");
-    public String _name = "myLineType.0";                       // 2
+    public String _name = "DXFLineType";                       // 2
     public String _value = "";					// 3
     public float _length = 0;					// 40
     public float _count = 0;					// 73
     public Vector<Float> _spacing = new Vector<Float>();	// 49
 
-    //http://java.sun.com/developer/JDCTechTips/2003/tt0520.html
     public DXFLineType() {
     }
 
@@ -36,7 +36,6 @@ public class DXFLineType {
             _spacing = spacing;
         }
         _motif = parseDXF();
-
     }
 
     public static DXFLineType read(DXFLineNumberReader br) throws IOException {

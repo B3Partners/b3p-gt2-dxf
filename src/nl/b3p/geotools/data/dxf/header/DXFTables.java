@@ -18,12 +18,7 @@ public class DXFTables implements DXFConstants {
     private static final Log log = LogFactory.getLog(DXFTables.class);
     public static final double defaultThickness = 1.0f;
     public static final float defautMotif[] = {1.0f, 0.0f};
-    private static final float zoomDash[] = DXFLineType.parseTxt("_");
-    public static int CAP = BasicStroke.CAP_ROUND;
-    public static int JOIN = BasicStroke.JOIN_ROUND;
-    public static final BasicStroke defaultStroke = new BasicStroke((float) defaultThickness, CAP, JOIN, 10.0f, defautMotif, 0.0f);
-    public static final BasicStroke zoomStroke = new BasicStroke((float) defaultThickness, CAP, JOIN, 10.0f, zoomDash, 0.0f);
-    public Vector<DXFLayer> theLayers = new Vector<DXFLayer>();
+     public Vector<DXFLayer> theLayers = new Vector<DXFLayer>();
     public Vector<DXFLineType> theLineTypes = new Vector<DXFLineType>();
 
     public DXFTables() {

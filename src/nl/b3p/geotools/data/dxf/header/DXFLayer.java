@@ -17,24 +17,24 @@ import org.apache.commons.logging.LogFactory;
 public class DXFLayer extends DXFEntity implements DXFConstants {
 
     private static final Log log = LogFactory.getLog(DXFLayer.class);
+    public static final String DEFAULT_NAME = "default";
     public int _flag = 0;
-    public String _nom;
     public Vector<DXFEntity> theEnt = new Vector<DXFEntity>();
 
     public DXFLayer(String nom, int c) {
         super(c, null, 0, null, DXFTables.defaultThickness);
-        _nom = nom;
+        setName(nom);
     }
 
     public DXFLayer(String nom, int c, int flag) {
         super(c, null, 0, null, DXFTables.defaultThickness);
-        _nom = nom;
+        setName(nom);
         _flag = flag;
     }
 
     @Override
     public void setVisible(boolean bool) {
-        isVisible = bool;
+        setVisible(bool);
         for (int i = 0; i < theEnt.size(); i++) {
             ((DXFEntity) theEnt.get(i)).setVisible(bool);
         }

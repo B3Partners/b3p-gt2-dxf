@@ -15,14 +15,17 @@ public class DXFTrace extends DXFSolid {
 
     public DXFTrace() {
         super();
+        setName("DXFTrace");
     }
 
     public DXFTrace(DXFPoint p1, DXFPoint p2, DXFPoint p3, DXFPoint p4, double thickness, int c, DXFLayer l, int visibility, DXFLineType lineType) {
         super(p1, p2, p3, p4, thickness, c, l, visibility, lineType);
+        setName("DXFTrace");
     }
 
     public DXFTrace(DXFTrace trace) {
-        super(trace._p1, trace._p2, trace._p3, trace._p4, trace._thickness, trace._color, trace._refLayer, 0, trace._lineType);
+        super(trace._p1, trace._p2, trace._p3, trace._p4, trace.getThickness(), trace.getColor(), trace.getRefLayer(), 0, trace.getLineType());
+        setName("DXFTrace");
     }
 
     public static DXFEntity read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
@@ -31,12 +34,13 @@ public class DXFTrace extends DXFSolid {
 
         int visibility = 0;
         DXFSolid s = (DXFSolid) DXFSolid.read(br, univers);
-        if (!s.isVisible) {
+        if (!s.isVisible()) {
             visibility = 1;
         }
-        DXFTrace e = new DXFTrace(s._p1, s._p2, s._p3, s._p4, s._thickness, s._color, s._refLayer, visibility, s._lineType);
+        DXFTrace e = new DXFTrace(s._p1, s._p2, s._p3, s._p4,s.getThickness(), s.getColor(), s.getRefLayer(), visibility, s.getLineType());
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
         e.setStartingLineNumber(sln);
+        e.setUnivers(univers);
 
         log.debug(e.toString());
         return e;

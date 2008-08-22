@@ -28,10 +28,12 @@ public class DXFDimension extends DXFBlockReference {
         _angle = a;
         _dimension = dim;
         _point_WCS = new DXFPoint(x, y, c, null, visibility, 1);
+        setName("DXFDimension");
     }
 
     public DXFDimension() {
         super(-1, null, 0, null, "", null);
+        setName("DXFDimension");
     }
 
     public static DXFDimension read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
@@ -105,6 +107,7 @@ public class DXFDimension extends DXFBlockReference {
         d = new DXFDimension(angle, dimension, x, y, refBlock, nomBlock, l, visibility, c, lineType);
         d.setType(DXFEntity.TYPE_UNSUPPORTED);
         d.setStartingLineNumber(sln);
+        d.setUnivers(univers);
 
         if ((refBlock == null)) {
             univers.addRefBlockForUpdate(d);

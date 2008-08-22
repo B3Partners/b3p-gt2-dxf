@@ -1,5 +1,7 @@
 package nl.b3p.geotools.data.dxf.entities;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
 import java.io.EOFException;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.IOException;
@@ -18,7 +20,6 @@ import org.apache.commons.logging.LogFactory;
 public class DXFLine extends DXFEntity {
 
     private static final Log log = LogFactory.getLog(DXFLine.class);
-    private static final long serialVersionUID = 1L;
     public DXFPoint _a = new DXFPoint();
     public DXFPoint _b = new DXFPoint();
 
@@ -26,18 +27,19 @@ public class DXFLine extends DXFEntity {
         super(c, l, visibility, lineType, thickness);
         _a = a;
         _b = b;
-
+        setName("DXFLine");
     }
 
     public DXFLine() {
         super(-1, null, 0, null, DXFTables.defaultThickness);
+        setName("DXFLine");
     }
 
     public DXFLine(DXFLine original) {
-        super(original._color, original._refLayer, 0, original._lineType, original._thickness);
+        super(original.getColor(), original.getRefLayer(), 0, original.getLineType(), original.getThickness());
         _a = new DXFPoint(original._a);
         _b = new DXFPoint(original._b);
-
+        setName("DXFLine");
     }
 
     public static DXFLine read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
@@ -112,9 +114,32 @@ public class DXFLine extends DXFEntity {
                 visibility);
         e.setType(DXFEntity.TYPE_LINE);
         e.setStartingLineNumber(sln);
+        e.setUnivers(univers);
         log.debug(e.toString(x1, y1, x2, y2, c, visibility, thickness));
         log.debug(">Exit at line: " + br.getLineNumber());
         return e;
+    }
+
+    public Coordinate[] toCoordinateArray() {
+        if (_a == null || _b == null) {
+            addError("coordinate array can not be created.");
+            return null;
+        }
+        return new Coordinate[]{_a.toCoordinate(), _b.toCoordinate()};
+    }
+
+    @Override
+    public Geometry getGeometry() {
+        Geometry g = super.getGeometry();
+        if (g == null) {
+            Coordinate[] ca = toCoordinateArray();
+            if (ca != null && ca.length > 1) {
+                return getUnivers().getGeometryFactory().createLineString(ca);
+            } else {
+                addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
+            }
+        }
+        return g;
     }
 
     public String toString(double x1, double y1, double x2, double y2, int c, int visibility, double thickness) {

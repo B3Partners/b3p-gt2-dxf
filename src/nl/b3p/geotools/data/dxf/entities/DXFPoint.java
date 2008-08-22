@@ -1,5 +1,7 @@
 package nl.b3p.geotools.data.dxf.entities;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.awt.geom.Point2D;
 import java.io.EOFException;
@@ -26,8 +28,8 @@ public class DXFPoint extends DXFEntity {
             p = new Point2D.Double(0, 0);
         }
         _point = p;
-        _thickness = thickness;
-
+        setThickness(thickness);
+        setName("DXFPoint");
     }
 
     public DXFPoint(Point2D.Double p) {
@@ -36,20 +38,24 @@ public class DXFPoint extends DXFEntity {
             p = new Point2D.Double(0, 0);
         }
         _point = p;
+        setName("DXFPoint");
     }
 
     public DXFPoint() {
         super(-1, null, 0, null, DXFTables.defaultThickness);
+        setName("DXFPoint");
     }
 
     public DXFPoint(double x, double y, int c, DXFLayer l, int visibility, double thickness) {
         super(c, l, visibility, null, DXFTables.defaultThickness);
         _point = new Point2D.Double(x, y);
+        setName("DXFPoint");
     }
 
     public DXFPoint(DXFPoint _a) {
-        super(_a._color, _a._refLayer, 0, null, DXFTables.defaultThickness);
+        super(_a.getColor(), _a.getRefLayer(), 0, null, DXFTables.defaultThickness);
         _point = new Point2D.Double(_a.X(), _a.Y());
+        setName("DXFPoint");
     }
 
     public void setX(double x) {
@@ -124,9 +130,27 @@ public class DXFPoint extends DXFEntity {
         DXFPoint e = new DXFPoint(x, y, c, l, visibility, thickness);
         e.setType(DXFEntity.TYPE_POINT);
         e.setStartingLineNumber(sln);
+        e.setUnivers(univers);
         log.debug(e.toString(x, y, visibility, c, thickness));
         log.debug(">>Exit at line: " + br.getLineNumber());
         return e;
+    }
+
+    @Override
+    public Geometry getGeometry() {
+        Geometry g = super.getGeometry();
+        if (g == null) {
+            return getUnivers().getGeometryFactory().createPoint(toCoordinate());
+        }
+        return g;
+    }
+
+    public Coordinate toCoordinate() {
+        if (_point == null) {
+            addError("coordinate can not be created.");
+            return null;
+        }
+        return new Coordinate(_point.getX(), _point.getY());
     }
 
     public String toString(double x, double y, int visibility, int c, double thickness) {

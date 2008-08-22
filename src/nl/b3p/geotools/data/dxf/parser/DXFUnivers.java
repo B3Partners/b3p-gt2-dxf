@@ -1,10 +1,9 @@
 package nl.b3p.geotools.data.dxf.parser;
 
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.PrecisionModel;
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.util.Properties;
 import java.util.Vector;
 
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
@@ -16,19 +15,20 @@ import nl.b3p.geotools.data.dxf.header.DXFHeader;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
 import nl.b3p.geotools.data.dxf.header.DXFTables;
-import org.apache.commons.io.input.CountingInputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.PropertyConfigurator;
 
 public class DXFUnivers implements DXFConstants {
 
     private static final Log log = LogFactory.getLog(DXFUnivers.class);
+    public static final PrecisionModel precisionModel = new PrecisionModel(PrecisionModel.FLOATING);
+    public static final int NUM_OF_SEGMENTS = 36;
     private Vector<DXFBlockReference> _entForUpdate = new Vector<DXFBlockReference>();
     public Vector<DXFTables> theTables = new Vector<DXFTables>();
     public Vector<DXFBlock> theBlocks = new Vector<DXFBlock>();
     public Vector<DXFEntity> theEntities = new Vector<DXFEntity>();
-    public DXFHeader _header;
+    private DXFHeader _header;
+    private GeometryFactory geometryFactory = null;
 
     public DXFUnivers() {
     }
@@ -96,6 +96,8 @@ public class DXFUnivers implements DXFConstants {
                         if (_header._EXTMAX == null || _header._EXTMIN == null) {
                             _header = new DXFHeader();
                         }
+                        /* construct geometry factory */
+                        geometryFactory = new GeometryFactory(precisionModel, _header._SRID);
                     } else if (name.equals(TABLES)) {
                         DXFTables at = DXFTables.readTables(br);
                         theTables.add(at);
@@ -140,8 +142,9 @@ public class DXFUnivers implements DXFConstants {
                 theTables.size(); i++) {
             for (int j = 0; j <
                     theTables.elementAt(i).theLayers.size(); j++) {
-                if (theTables.elementAt(i).theLayers.elementAt(j)._nom.equals(nom)) {
-                    return theTables.elementAt(i).theLayers.elementAt(j);
+                if (theTables.elementAt(i).theLayers.elementAt(j).getName().equals(nom)) {
+                    l = theTables.elementAt(i).theLayers.elementAt(j);
+                    return l;
                 }
 
             }
@@ -189,27 +192,11 @@ public class DXFUnivers implements DXFConstants {
         _entForUpdate.removeAllElements();
     }
 
-    public static void main(String[] args) throws Exception {
+    public GeometryFactory getGeometryFactory() {
+        return geometryFactory;
+    }
 
-        Class c = DXFUnivers.class;
-        URL url = c.getResource("/log4j.properties");
-        Properties p = new Properties();
-        p.load(url.openStream());
-        PropertyConfigurator.configure(p);
-        log.info("logging configured!");
-        
-        
-        URL url2 = c.getResource("/VM50.dxf");
-        CountingInputStream cis = new CountingInputStream(url2.openStream());
-        DXFLineNumberReader lnr = new DXFLineNumberReader(new InputStreamReader(cis));
-        DXFUnivers theUnivers = new DXFUnivers();
-        theUnivers.read(lnr);
-        Vector<DXFEntity> theEntities = theUnivers.theEntities;
-        if (theEntities != null) {
-            theEntities = new Vector<DXFEntity>();
-        }
-
-//        String version = theUnivers._header._ACADVER;
-
+    public void setGeometryFactory(GeometryFactory geometryFactory) {
+        this.geometryFactory = geometryFactory;
     }
 }

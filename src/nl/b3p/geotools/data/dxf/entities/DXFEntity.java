@@ -2,10 +2,8 @@ package nl.b3p.geotools.data.dxf.entities;
 
 import com.vividsolutions.jts.algorithm.CGAlgorithms;
 import com.vividsolutions.jts.geom.Coordinate;
-import java.awt.BasicStroke;
-import nl.b3p.geotools.data.dxf.header.DXFLayer;
-import nl.b3p.geotools.data.dxf.header.DXFLineType;
-import nl.b3p.geotools.data.dxf.header.DXFTables;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryCollection;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -16,12 +14,15 @@ import com.vividsolutions.jts.geom.TopologyException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import nl.b3p.geotools.data.dxf.header.DXFLayer;
+import nl.b3p.geotools.data.dxf.header.DXFLineType;
+import nl.b3p.geotools.data.dxf.parser.DXFColor;
 import nl.b3p.geotools.data.dxf.parser.DXFConstants;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 
-public abstract class DXFEntity implements DXFConstants  {
+public abstract class DXFEntity implements DXFConstants {
+
     private static final Log log = LogFactory.getLog(DXFEntity.class);
 
     /* feature write */
@@ -30,23 +31,20 @@ public abstract class DXFEntity implements DXFConstants  {
     public static final int TYPE_POLYGON = 2;
     public static final int TYPE_UNSUPPORTED = -1;
     private int type = TYPE_UNSUPPORTED;
-    private String name = null;
+    private String _name = null;
     private String key = null;
     private String urlLink = null;
     private boolean parseError = false;
     private String errorDescription = null;
-    private GeometryFactory geometryFactory = null;
     private Geometry geometry = null;
     /* dxf read */
+    private DXFUnivers univers;
     private int startingLineNumber = -1;
-    public DXFLineType _lineType;
-    public int _color;
-    public DXFLayer _refLayer;
-    public double _thickness;
-    public boolean isVisible = true;
-    public boolean selected = false;
-    public boolean changing = false;
-    public BasicStroke _stroke;
+    private DXFLineType _lineType;
+    private int _color;
+    private DXFLayer _refLayer;
+    private double _thickness;
+    private boolean visible = true;
 
     public DXFEntity(int c, DXFLayer l, int visibility, DXFLineType lineType, double thickness) {
         _lineType = lineType;
@@ -55,19 +53,14 @@ public abstract class DXFEntity implements DXFConstants  {
         _thickness = thickness;
 
         if (visibility == 0) {
-            isVisible = true;
+            visible = true;
         } else {
-            isVisible = false;
-        }
-        if (_lineType != null) {
-            _stroke = new BasicStroke((float) _thickness, DXFTables.CAP, DXFTables.JOIN, 10.0f, DXFLineType.parseTxt(_lineType._value), 0.0f);
-        } else {
-            _stroke = new BasicStroke((float) _thickness, DXFTables.CAP, DXFTables.JOIN, 10.0f, DXFTables.defautMotif, 0.0f);
+            visible = false;
         }
     }
 
     public String getName() {
-        return name;
+        return _name;
     }
 
     public String getKey() {
@@ -90,18 +83,119 @@ public abstract class DXFEntity implements DXFConstants  {
         return errorDescription;
     }
 
-    private Geometry createGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
+    public int getStartingLineNumber() {
+        return startingLineNumber;
+    }
+
+    public void setStartingLineNumber(int startingLineNumber) {
+        this.startingLineNumber = startingLineNumber;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
+    }
+
+    public void setName(String name) {
+        this._name = name;
+    }
+
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public DXFLineType getLineType() {
+        return _lineType;
+    }
+
+    public String getLineTypeName() {
+        if (_lineType == null) {
+            return DXFLineType.DEFAULT_NAME;
+        }
+        return _lineType._name;
+    }
+
+    public void setLineType(DXFLineType lineType) {
+        this._lineType = lineType;
+    }
+
+    public int getColor() {
+        return _color;
+    }
+
+    public String getColorRGB() {
+        return DXFColor.getColorRGB(_color);
+    }
+
+    public void setColor(int color) {
+        this._color = color;
+    }
+
+    public DXFLayer getRefLayer() {
+        return _refLayer;
+    }
+
+    public String getRefLayerName() {
+        if (_refLayer == null) {
+            return DXFLayer.DEFAULT_NAME;
+        }
+        return _refLayer.getName();
+    }
+
+    public void setRefLayer(DXFLayer refLayer) {
+        this._refLayer = refLayer;
+    }
+
+    public double getThickness() {
+        return _thickness;
+    }
+
+    public void setThickness(double thickness) {
+        this._thickness = thickness;
+    }
+
+    public DXFUnivers getUnivers() {
+        return univers;
+    }
+
+    public void setUnivers(DXFUnivers univers) {
+        this.univers = univers;
+    }
+
+    /**
+     * Called when an error occurs but that error is constrained to a single
+     * feature/subgeometry. Try to continue parsing features, but do set parseError
+     * property to true and add and error message.
+     * @param msg
+     */
+    public void addError(String msg) {
+        if (!parseError) {
+            parseError = true;
+            errorDescription = "entry starting line " + getStartingLineNumber() + ": " + msg;
+        } else {
+            errorDescription += "; " + msg;
+        }
+    }
+
+    protected Geometry createGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
         if (entryCoordinates.isEmpty()) {
-            return new GeometryCollection(new Geometry[]{}, geometryFactory);
+            return new GeometryCollection(new Geometry[]{}, univers.getGeometryFactory());
         }
 
         try {
             switch (type) {
-                case TYPE_POINT:
+                case DXFEntity.TYPE_POINT:
                     return createPointGeometry(entryCoordinates);
-                case TYPE_LINE:
+                case DXFEntity.TYPE_LINE:
                     return createLineGeometry(entryCoordinates);
-                case TYPE_POLYGON:
+                case DXFEntity.TYPE_POLYGON:
                     return createPolygonGeometry(entryCoordinates);
                 default:
                     throw new IllegalStateException();
@@ -115,28 +209,15 @@ public abstract class DXFEntity implements DXFConstants  {
         }
     }
 
-    private Geometry createPointGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
-        /* A SDL point entry is always one point, no multipoints */
+    protected Geometry createPointGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
         if (entryCoordinates.size() != 1) {
             throw new DXFParseException(this, "Point can have only one coordinate");
         }
 
-        return geometryFactory.createMultiPoint(new Coordinate[]{entryCoordinates.get(0)});
+        return univers.getGeometryFactory().createMultiPoint(new Coordinate[]{entryCoordinates.get(0)});
     }
 
-    private Geometry createLineGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
-        /* In SDL, a polyline entry may consist of multiple lines (polypolyline),
-         * lines are separated by repeating the first coordinate of a line.
-         * Lines are never closed, but may be constructed as such in a 
-         * polyline of two lines with the last being the segment connecting
-         * the last point of the first line to the first point of the first
-         * line.
-         * 
-         * This SDL parser doesn't do anything special such as converting
-         * those to a LinearRing, but just puts multiple lines in a 
-         * MultiLineString.
-         */
-
+    protected Geometry createLineGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
         final List<LineString> lineStrings = new ArrayList<LineString>();
         Iterator<Coordinate> coordinatesIterator = entryCoordinates.iterator();
 
@@ -147,7 +228,7 @@ public abstract class DXFEntity implements DXFConstants  {
             }
         } while (coordinatesIterator.hasNext());
 
-        return geometryFactory.createMultiLineString((LineString[]) lineStrings.toArray(new LineString[]{}));
+        return univers.getGeometryFactory().createMultiLineString((LineString[]) lineStrings.toArray(new LineString[]{}));
     }
 
     /* Create a single polyline from a SDL entry which may contain multiple
@@ -155,14 +236,14 @@ public abstract class DXFEntity implements DXFConstants  {
      * The iterator is advanced to the first coordinate of the next polyline or
      * the end.
      */
-    private LineString createLineString(Iterator<Coordinate> coordinatesIterator) throws DXFParseException {
+    protected LineString createLineString(Iterator<Coordinate> coordinatesIterator) throws DXFParseException {
         List<Coordinate> vertices = new ArrayList<Coordinate>();
 
         Coordinate first = coordinatesIterator.next();
         vertices.add(first);
         if (!coordinatesIterator.hasNext()) {
             addError("Polyline must have at least two coordinates");
-            return geometryFactory.createLineString((Coordinate[]) null);
+            return univers.getGeometryFactory().createLineString((Coordinate[]) null);
         }
         vertices.add(coordinatesIterator.next());
 
@@ -177,39 +258,10 @@ public abstract class DXFEntity implements DXFConstants  {
             }
             vertices.add(c);
         }
-        return geometryFactory.createLineString((Coordinate[]) vertices.toArray(new Coordinate[]{}));
+        return univers.getGeometryFactory().createLineString((Coordinate[]) vertices.toArray(new Coordinate[]{}));
     }
 
-    /**
-     * Called when an error occurs but that error is constrained to a single
-     * feature/subgeometry. Try to continue parsing features, but do set parseError
-     * property to true and add and error message.
-     * @param msg
-     */
-    private void addError(String msg) {
-        if (!parseError) {
-            parseError = true;
-            errorDescription = "entry starting line " + getStartingLineNumber() + ": " + msg;
-        } else {
-            errorDescription += "; " + msg;
-        }
-    }
-
-    private Geometry createPolygonGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
-        /* In practice, output from the SDF Loader does not follow the constraints
-         * of the SDL file format very closely especially with polygons. Therefore
-         * this parser ignores invalid polygons. This may result in empty or weird
-         * features.
-         * 
-         * The attribute "parseError" is set to true if an entry contains parsing
-         * errors, and the "errorDescription" attribute set to the details.
-         */
-
-        /* Note that this parser does not group polygons with the same key 
-         * attribute into a multipolygon (only possible after parsing entire
-         * file).
-         */
-
+    protected Geometry createPolygonGeometry(List<Coordinate> entryCoordinates) throws DXFParseException {
         final List<LinearRing> rings = new ArrayList<LinearRing>();
 
         int index = 0;
@@ -258,19 +310,19 @@ public abstract class DXFEntity implements DXFConstants  {
                 }
                 addError(error);
             } else {
-                rings.add(geometryFactory.createLinearRing(vertices.toArray(new Coordinate[]{})));
+                rings.add(univers.getGeometryFactory().createLinearRing(vertices.toArray(new Coordinate[]{})));
             }
         } while (index < size);
 
         List<Polygon> polygons = foldHoles(rings);
-        return geometryFactory.createMultiPolygon(GeometryFactory.toPolygonArray(polygons));
+        return univers.getGeometryFactory().createMultiPolygon(GeometryFactory.toPolygonArray(polygons));
     }
 
     /**
      * Convert a list of LinearRings to Polygons with holes. Uses the most naive
      * algorithm possible.
      */
-    private List<Polygon> foldHoles(List<LinearRing> rings) {
+    protected List<Polygon> foldHoles(List<LinearRing> rings) {
         /* Convert LinearRings to Polygons with holes as follows:
          * for each polygon, check if it is within another polygon. Take the
          * first polygon that contains it (and is oriented differently ccw/cw),
@@ -281,7 +333,7 @@ public abstract class DXFEntity implements DXFConstants  {
         List<Polygon> polygons = new ArrayList<Polygon>(rings.size());
         List<Boolean> ccwCache = new ArrayList<Boolean>(rings.size());
         for (int i = 0; i < rings.size(); i++) {
-            polygons.add(geometryFactory.createPolygon(rings.get(i), null));
+            polygons.add(univers.getGeometryFactory().createPolygon(rings.get(i), null));
             ccwCache.add(null);
         }
 
@@ -303,7 +355,7 @@ public abstract class DXFEntity implements DXFConstants  {
                                     qHoles[k] = (LinearRing) q.getInteriorRingN(k);
                                 }
                                 qHoles[qHoles.length - 1] = (LinearRing) p.getExteriorRing();
-                                q = geometryFactory.createPolygon((LinearRing) q.getExteriorRing(), qHoles);
+                                q = univers.getGeometryFactory().createPolygon((LinearRing) q.getExteriorRing(), qHoles);
                                 polygons.set(j, q);
                                 polygons.remove(i);
                                 ccwCache.remove(i);
@@ -332,7 +384,7 @@ public abstract class DXFEntity implements DXFConstants  {
         return polygons;
     }
 
-    private static boolean ccw(Polygon p, int index, List<Boolean> ccwCacheArray) {
+    protected static boolean ccw(Polygon p, int index, List<Boolean> ccwCacheArray) {
         Boolean cached = ccwCacheArray.get(index);
         if (cached != null) {
             return cached;
@@ -342,31 +394,19 @@ public abstract class DXFEntity implements DXFConstants  {
         return ccw;
     }
 
-    public void setVisible(boolean bool) {
-        isVisible = bool;
+    public void setParseError(boolean parseError) {
+        this.parseError = parseError;
     }
 
-    public void setSelected(boolean s) {
-        this.selected = s;
+    public void setErrorDescription(String errorDescription) {
+        this.errorDescription = errorDescription;
     }
 
-    public void setChanging(boolean b) {
-        this.changing = b;
+    public void setKey(String key) {
+        this.key = key;
     }
 
-    public int getStartingLineNumber() {
-        return startingLineNumber;
-    }
-
-    public void setStartingLineNumber(int startingLineNumber) {
-        this.startingLineNumber = startingLineNumber;
-    }
-
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
+    public void setUrlLink(String urlLink) {
+        this.urlLink = urlLink;
     }
 }

@@ -1,7 +1,6 @@
 package nl.b3p.geotools.data.dxf.entities;
 
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
-import java.awt.geom.GeneralPath;
 import java.io.EOFException;
 import java.io.IOException;
 
@@ -19,16 +18,15 @@ import org.apache.commons.logging.LogFactory;
 public class DXFSolid extends DXFEntity {
 
     private static final Log log = LogFactory.getLog(DXFSolid.class);
-    private static final long serialVersionUID = 2567756283532200546L;
     public DXFPoint _p1 = new DXFPoint();
     public DXFPoint _p2 = new DXFPoint();
     public DXFPoint _p3 = new DXFPoint();
     public DXFPoint _p4 = null;
-    public GeneralPath g;
 
     public DXFSolid() {
         super(-1, null, 0, null, DXFTables.defaultThickness);
-    }
+        setName("DXFSolid");
+   }
 
     public DXFSolid(DXFPoint p1, DXFPoint p2, DXFPoint p3, DXFPoint p4,
             double thickness, int c, DXFLayer l, int visibility, DXFLineType lineType) {
@@ -43,15 +41,17 @@ public class DXFSolid extends DXFEntity {
         } else {
             _p4 = p4;
         }
+        setName("DXFSolid");
     }
 
     public DXFSolid(DXFSolid solid) {
-        super(solid._color, solid._refLayer, 0, solid._lineType, solid._thickness);
+        super(solid.getColor(), solid.getRefLayer(), 0, solid.getLineType(), solid.getThickness());
 
         _p1 = new DXFPoint(solid._p1);
         _p2 = new DXFPoint(solid._p2);
         _p3 = new DXFPoint(solid._p3);
         _p4 = new DXFPoint(solid._p4);
+        setName("DXFSolid");
     }
 
     public static DXFEntity read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
@@ -142,6 +142,7 @@ public class DXFSolid extends DXFEntity {
                 lineType);
         e.setType(DXFEntity.TYPE_POLYGON);
         e.setStartingLineNumber(sln);
+        e.setUnivers(univers);
         log.debug(e.toString(p1_x, p2_x, p3_x, p4_x, p1_y, p2_y, p3_y, p4_y, thickness, c, visibility));
         log.debug(">>Exit at line: " + br.getLineNumber());
         return e;

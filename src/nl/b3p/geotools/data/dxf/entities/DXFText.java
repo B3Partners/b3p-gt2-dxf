@@ -1,5 +1,7 @@
 package nl.b3p.geotools.data.dxf.entities;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.awt.font.TextAttribute;
 import java.awt.geom.Rectangle2D;
@@ -40,15 +42,17 @@ public class DXFText extends DXFEntity {
         _style = style;
         _angle = angle;
         _zoomfactor = zoomFactor;
+        setName("DXFText");
     }
 
     public DXFText() {
         super(-1, null, 0, null, DXFTables.defaultThickness);
+        setName("DXFText");
     }
 
     public DXFText(DXFText text) {
-        super(text._color, text._refLayer, 0, text._lineType, text._thickness);
-        _point = new DXFPoint(text._point.X(), text._point.Y(), text._color, text._refLayer, 0, text._thickness);
+        super(text.getColor(), text.getRefLayer(), 0, text.getLineType(), text.getThickness());
+        _point = new DXFPoint(text._point.X(), text._point.Y(), text.getColor(), text.getRefLayer(), 0, text.getThickness());
         _value = text._value;
         _rotation = text._rotation;
         _height = text._height;
@@ -56,6 +60,7 @@ public class DXFText extends DXFEntity {
         _style = text._style;
         _angle = text._angle;
         _zoomfactor = text._zoomfactor;
+        setName("DXFText");
     }
 
     public void setVal(String s) {
@@ -215,9 +220,29 @@ public class DXFText extends DXFEntity {
         DXFText e = new DXFText(x, y, value, rotation, thickness, height, align, style, c, l, angle, zoomfactor, visibility, lineType);
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
         e.setStartingLineNumber(sln);
+        e.setUnivers(univers);
+        /* TODO hack voor label */
+        e.setKey(value);
         log.debug(e.toString(x, y, value, rotation, thickness, height, align, style, c, angle, zoomfactor, visibility));
         log.debug(">Exit at line: " + br.getLineNumber());
         return e;
+    }
+
+    @Override
+    public Geometry getGeometry() {
+        Geometry g = super.getGeometry();
+        if (g == null) {
+            return getUnivers().getGeometryFactory().createPoint(toCoordinate());
+        }
+        return g;
+    }
+
+    public Coordinate toCoordinate() {
+        if (_point == null || _point._point == null) {
+            addError("coordinate can not be created.");
+            return null;
+        }
+        return new Coordinate(_point._point.getX(), _point._point.getY());
     }
 
     public String toString(double x, double y, String value, double rotation, double thickness, double height, double align, String style, int c, double angle, double zoomfactor, int visibility) {

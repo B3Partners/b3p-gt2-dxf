@@ -1,12 +1,14 @@
 package nl.b3p.geotools.data.dxf.entities;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
-import java.awt.geom.GeneralPath;
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
-
-
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
@@ -20,39 +22,52 @@ import org.apache.commons.logging.LogFactory;
 public class DXFPolyline extends DXFEntity {
 
     private static final Log log = LogFactory.getLog(DXFPolyline.class);
-    private static final long serialVersionUID = 1L;
-    public String _name = "myPolyline.0";
+    public String _id;
+    /*
+    Polyline flag (bit-coded); default is 0:
+    1 = This is a closed polyline (or a polygon mesh closed in the M direction).
+    2 = Curve-fit vertices have been added.
+    4 = Spline-fit vertices have been added.
+    8 = This is a 3D polyline.
+    16 = This is a 3D polygon mesh.
+    32 = The polygon mesh is closed in the N direction.
+    64 = The polyline is a polyface mesh.
+    128 = The linetype pattern is generated continuously around the vertices of this polyline.
+     */
     public int _flag = 0;
     public Vector<DXFVertex> theVertex = new Vector<DXFVertex>();
-    GeneralPath poly = new GeneralPath();
 
     public DXFPolyline(String name, int flag, int c, DXFLayer l, Vector<DXFVertex> v, int visibility, DXFLineType lineType, double thickness) {
         super(c, l, visibility, lineType, thickness);
-        _name = name;
+        _id = name;
 
         if (v == null) {
             v = new Vector<DXFVertex>();
         }
         theVertex = v;
         _flag = flag;
+        setName("DXFPolyline");
     }
 
     public DXFPolyline(DXFLayer l) {
         super(-1, l, 0, null, DXFTables.defaultThickness);
+        setName("DXFPolyline");
     }
 
     public DXFPolyline() {
         super(-1, null, 0, null, DXFTables.defaultThickness);
+        setName("DXFPolyline");
     }
 
     public DXFPolyline(DXFPolyline orig) {
-        super(orig._color, orig._refLayer, 0, orig._lineType, orig._thickness);
-        _name = orig._name;
+        super(orig.getColor(), orig.getRefLayer(), 0, orig.getLineType(), orig.getThickness());
+        _id = orig._id;
 
         for (int i = 0; i < orig.theVertex.size(); i++) {
             theVertex.add(new DXFVertex((DXFVertex) orig.theVertex.elementAt(i), true));
         }
         _flag = orig._flag;
+        setName("DXFPolyline");
     }
 
     public static DXFPolyline read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
@@ -118,6 +133,7 @@ public class DXFPolyline extends DXFEntity {
         DXFPolyline e = new DXFPolyline(name, flag, c, l, lv, visibility, lineType, DXFTables.defaultThickness);
         e.setType(DXFEntity.TYPE_LINE);
         e.setStartingLineNumber(sln);
+        e.setUnivers(univers);
         log.debug(e.toString(name, flag, lv.size(), c, visibility, DXFTables.defaultThickness));
         log.debug(">>Exit at line: " + br.getLineNumber());
         return e;
@@ -140,6 +156,41 @@ public class DXFPolyline extends DXFEntity {
         s.append(thickness);
         s.append("]");
         return s.toString();
+    }
+
+    @Override
+    public Geometry getGeometry() {
+        Geometry g = super.getGeometry();
+        if (g == null) {
+            Coordinate[] ca = toCoordinateArray();
+            if (ca != null && ca.length>1) {
+                return getUnivers().getGeometryFactory().createLineString(ca);
+            } else {
+                addError("coordinate array faulty, size: " + (ca==null?0:ca.length));
+            }
+        }
+        return g;
+    }
+
+    public Coordinate[] toCoordinateArray() {
+        if (theVertex == null) {
+            addError("coordinate array can not be created.");
+            return null;
+        }
+        Iterator it = theVertex.iterator();
+        List<Coordinate> lc = new ArrayList<Coordinate>();
+        while (it.hasNext()) {
+            DXFVertex v = (DXFVertex) it.next();
+            lc.add(v.toCoordinate());
+        }
+        /* TODO uitzoeken of lijn zichzelf snijdt, zo ja nodding
+         * zie jts union:
+         * Collection lineStrings = . . .
+         * Geometry nodedLineStrings = (LineString) lineStrings.get(0);
+         * for (int i = 1; i < lineStrings.size(); i++) {
+         * nodedLineStrings = nodedLineStrings.union((LineString)lineStrings.get(i));
+         * */
+        return lc.toArray(new Coordinate[]{});
     }
 }
 

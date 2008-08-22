@@ -23,6 +23,8 @@ public class DXFHeader implements DXFConstants {
     public DXFPoint _EXTMAX;
     public int _FILLMODE;
     public String _ACADVER;
+    public int _SRID;
+ 
 
     public DXFHeader() {
         _LIMMIN = new DXFPoint(new Point2D.Double(0, 0));
@@ -31,15 +33,17 @@ public class DXFHeader implements DXFConstants {
         _EXTMAX = new DXFPoint(new Point2D.Double(50, 50));
         _FILLMODE = 0;
         _ACADVER = "AC1006";
+        _SRID = 28992;
     }
 
-    public DXFHeader(DXFPoint limmin, DXFPoint limmax, DXFPoint extmin, DXFPoint extmax, int fillmode, String version) {
+    public DXFHeader(DXFPoint limmin, DXFPoint limmax, DXFPoint extmin, DXFPoint extmax, int fillmode, String version, int srid) {
         _LIMMIN = limmin;
         _LIMMAX = limmax;
         _EXTMIN = extmin;
         _EXTMAX = extmax;
         _FILLMODE = fillmode;
         _ACADVER = version;
+        _SRID = srid;
     }
 
     public static DXFHeader read(DXFLineNumberReader br) throws IOException {
@@ -49,6 +53,7 @@ public class DXFHeader implements DXFConstants {
         Point2D.Double extmax = null;
         int fillmode = 0;
         String version = "AC1006";
+        int srid = 28992; // default rd new
 
 
         int sln = br.getLineNumber();
@@ -147,13 +152,13 @@ public class DXFHeader implements DXFConstants {
                 new DXFPoint(limmax, -1, null, 1, 1),
                 new DXFPoint(extmin, -1, null, 1, 1),
                 new DXFPoint(extmax, -1, null, 1, 1),
-                fillmode, version);
-        log.debug(e.toString(limmin, limmax, extmin, extmax, fillmode, version));
+                fillmode, version, srid);
+        log.debug(e.toString(limmin, limmax, extmin, extmax, fillmode, version, srid));
         log.debug(">Exit at line: " + br.getLineNumber());
         return e;
     }
 
-    public String toString(Point2D.Double limmin, Point2D.Double limmax, Point2D.Double extmin, Point2D.Double extmax, int fillmode, String version) {
+    public String toString(Point2D.Double limmin, Point2D.Double limmax, Point2D.Double extmin, Point2D.Double extmax, int fillmode, String version, int srid) {
         StringBuffer s = new StringBuffer();
         s.append("DXFHeader [");
         s.append("limmin: ");
@@ -166,6 +171,8 @@ public class DXFHeader implements DXFConstants {
         s.append(extmax + ", ");
         s.append("fillmode: ");
         s.append(fillmode + ",");
+        s.append("srid: ");
+        s.append(srid + ",");
         s.append("version: ");
         s.append(version);
         s.append("]");

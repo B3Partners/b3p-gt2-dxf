@@ -17,24 +17,23 @@ import org.apache.commons.logging.LogFactory;
 
 public class DXFInsert extends DXFBlockReference {
     private static final Log log = LogFactory.getLog(DXFInsert.class);
-
     public DXFPoint _point = new DXFPoint();
 
     public DXFInsert(double x, double y, String nomBlock, DXFBlock refBlock, DXFLayer l, int visibility, int c, DXFLineType lineType) {
         super(c, l, visibility, lineType, nomBlock, refBlock);
         _point = new DXFPoint(x, y, c, null, visibility, 1);
-
+        setName("DXFInsert");
     }
 
     public DXFInsert(DXFPoint p, String nomBlock, DXFBlock refBlock, DXFLayer l, int visibility, DXFLineType lineType) {
         super(-1, l, visibility, lineType, nomBlock, refBlock);
         _point = p;
-
+        setName("DXFInsert");
     }
 
     public DXFInsert() {
         super(-1, null, 0, null, "", null);
-
+        setName("DXFInsert");
     }
 
     public static DXFInsert read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
@@ -102,6 +101,7 @@ public class DXFInsert extends DXFBlockReference {
         m = new DXFInsert(x, y, nomBlock, refBlock, l, visibility, c, lineType);
         m.setType(DXFEntity.TYPE_UNSUPPORTED);
         m.setStartingLineNumber(sln);
+        m.setUnivers(univers);
 
         if ((refBlock == null) || (refBlock != null && !refBlock._name.equalsIgnoreCase(nomBlock))) {
             univers.addRefBlockForUpdate(m);

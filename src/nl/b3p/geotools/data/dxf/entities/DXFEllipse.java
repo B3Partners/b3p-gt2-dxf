@@ -19,7 +19,6 @@ import org.apache.commons.logging.LogFactory;
 public class DXFEllipse extends DXFEntity {
 
     private static final Log log = LogFactory.getLog(DXFEllipse.class);
-    private static final long serialVersionUID = 5630853252028026450L;
     public DXFPoint _centre = new DXFPoint();
     public DXFPoint _point = new DXFPoint();
     public double _ratio = 0;
@@ -35,12 +34,12 @@ public class DXFEllipse extends DXFEntity {
         _end = e;
         _start = s;
         _e.setArcType(Arc2D.OPEN);
-
+        setName("DXFEllipse");
     }
 
     public DXFEllipse() {
         super(-1, null, 0, null, DXFTables.defaultThickness);
-
+        setName("DXFEllipse");
     }
 
     public static DXFEllipse read(DXFLineNumberReader br, DXFUnivers univers) throws NumberFormatException, IOException {
@@ -119,6 +118,7 @@ public class DXFEllipse extends DXFEntity {
                 r, s, e, c, l, visibility, lineType);
         m.setType(DXFEntity.TYPE_POLYGON);
         m.setStartingLineNumber(sln);
+        m.setUnivers(univers);
         log.debug(m.toString(visibility, c, r, s, e, x, y, x1, y1));
         log.debug(">>Exit at line: " + br.getLineNumber());
         return m;

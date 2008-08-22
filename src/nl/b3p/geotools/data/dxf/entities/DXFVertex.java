@@ -16,28 +16,31 @@ import org.apache.commons.logging.LogFactory;
 public class DXFVertex extends DXFPoint {
 
     private static final Log log = LogFactory.getLog(DXFVertex.class);
-    private static final long serialVersionUID = 1L;
     protected double _bulge = 0;
 
     public DXFVertex(double x, double y, double b, int c, DXFLayer l, int visibility) {
         super(x, y, c, l, visibility, 1);
+        setName("DXFVertex");
         _bulge = b;
     }
 
     public DXFVertex() {
         super(0, 0, -1, null, 0, 1);
+        setName("DXFVertex");
     }
 
     public DXFVertex(DXFVertex v) {
         this._bulge = v._bulge;
-        this._color = v._color;
+        setColor(v.getColor());
         this._point = v._point;
-        this._refLayer = v._refLayer;
+        setRefLayer(v.getRefLayer());
+        setName("DXFVertex");
     }
 
     public DXFVertex(DXFVertex orig, boolean bis) {
-        super(orig._point.x, orig._point.y, orig._color, orig._refLayer, 0, 1);
+        super(orig._point.x, orig._point.y, orig.getColor(), orig.getRefLayer(), 0, 1);
         _bulge = orig._bulge;
+        setName("DXFVertex");
     }
 
     public static DXFVertex read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
@@ -97,6 +100,7 @@ public class DXFVertex extends DXFPoint {
         DXFVertex e = new DXFVertex(x, y, b, c, l, visibility);
         e.setType(DXFEntity.TYPE_POLYGON);
         e.setStartingLineNumber(sln);
+        e.setUnivers(univers);
         log.debug(e.toString(b, x, y, c, visibility));
         log.debug(">Exit at line: " + br.getLineNumber());
         return e;

@@ -23,42 +23,43 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class DXFLwPolyline extends DXFEntity {
-    private static final Log log = LogFactory.getLog(DXFLwPolyline.class);
 
-    private static final long serialVersionUID = 1L;
-    public String _name = "myLwPolyline.0";
+    private static final Log log = LogFactory.getLog(DXFLwPolyline.class);
+    public String _id = "DXFLwPolyline";
     public int _flag = 0;
     public Vector<DXFLwVertex> _myVertex = new Vector<DXFLwVertex>();
-    GeneralPath poly = new GeneralPath();
 
     public DXFLwPolyline(String name, int flag, int c, DXFLayer l, Vector<DXFLwVertex> v, int visibility, DXFLineType lineType, double thickness) {
         super(c, l, visibility, lineType, thickness);
-        _name = name;
+        _id = name;
 
         if (v == null) {
             v = new Vector<DXFLwVertex>();
         }
         _myVertex = v;
         _flag = flag;
-
+        setName("DXFLwPolyline");
     }
 
     public DXFLwPolyline(DXFLayer l) {
         super(-1, l, 0, null, DXFTables.defaultThickness);
+        setName("DXFLwPolyline");
     }
 
     public DXFLwPolyline() {
         super(-1, null, 0, null, DXFTables.defaultThickness);
+        setName("DXFLwPolyline");
     }
 
     public DXFLwPolyline(DXFLwPolyline orig) {
-        super(orig._color, orig._refLayer, 0, orig._lineType, orig._thickness);
-        _name = orig._name;
+        super(orig.getColor(), orig.getRefLayer(), 0, orig.getLineType(), orig.getThickness());
+        _id = orig._id;
 
         for (int i = 0; i < orig._myVertex.size(); i++) {
             _myVertex.add(new DXFLwVertex((DXFLwVertex) orig._myVertex.elementAt(i), true));
         }
         _flag = orig._flag;
+        setName("DXFLwPolyline");
     }
 
     public static DXFLwPolyline read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
@@ -143,6 +144,7 @@ public class DXFLwPolyline extends DXFEntity {
         DXFLwPolyline e = new DXFLwPolyline(name, flag, c, l, lv, visibility, lineType, DXFTables.defaultThickness);
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
         e.setStartingLineNumber(sln);
+        e.setUnivers(univers);
         log.debug(e.toString());
         return e;
     }
