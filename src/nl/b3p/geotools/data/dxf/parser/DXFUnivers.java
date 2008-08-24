@@ -126,15 +126,13 @@ public class DXFUnivers implements DXFConstants {
 
     }
 
-    public DXFBlock findBlock(
-            String nom) {
+    public DXFBlock findBlock(String nom) {
         DXFBlock b = null;
         for (int i = 0; i <
                 theBlocks.size(); i++) {
             if (theBlocks.elementAt(i)._name.equals(nom)) {
                 return theBlocks.elementAt(i);
             }
-
         }
         return b;
     }
@@ -204,7 +202,7 @@ public class DXFUnivers implements DXFConstants {
     }
 
     public Geometry getErrorGeometry() {
-        if (errorGeometry==null && geometryFactory!=null) {
+        if (errorGeometry == null && geometryFactory != null) {
             errorGeometry = geometryFactory.createPoint(new Coordinate(0.0, 0.0));
         }
         return errorGeometry;

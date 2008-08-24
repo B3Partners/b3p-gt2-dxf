@@ -2,6 +2,7 @@ package nl.b3p.geotools.data.dxf.entities;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.LinearRing;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.awt.geom.Ellipse2D;
 import java.io.EOFException;
@@ -107,7 +108,7 @@ public class DXFCircle extends DXFEntity {
 
         }
         DXFCircle e = new DXFCircle(new DXFPoint(x, y, c, l, visibility, 1), r, lineType, c, l, visibility, thickness);
-        e.setType(DXFEntity.TYPE_LINE);
+        e.setType(DXFEntity.TYPE_POLYGON);
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
         log.debug(e.toString(x, y, c, visibility, thickness));
@@ -147,7 +148,8 @@ public class DXFCircle extends DXFEntity {
         if (geometry == null) {
             Coordinate[] ca = toCoordinateArray();
             if (ca != null && ca.length > 1) {
-                geometry = getUnivers().getGeometryFactory().createLineString(ca);
+                LinearRing lr = getUnivers().getGeometryFactory().createLinearRing(ca);
+                geometry = getUnivers().getGeometryFactory().createPolygon(lr, null);
             } else {
                 addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
             }

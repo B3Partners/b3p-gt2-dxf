@@ -2,6 +2,7 @@ package nl.b3p.geotools.data.dxf.entities;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.LinearRing;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.EOFException;
 import java.io.IOException;
@@ -131,7 +132,11 @@ public class DXFPolyline extends DXFEntity {
 
         }
         DXFPolyline e = new DXFPolyline(name, flag, c, l, lv, visibility, lineType, DXFTables.defaultThickness);
-        e.setType(DXFEntity.TYPE_LINE);
+        if ((flag & 1) == 1) {
+            e.setType(DXFEntity.TYPE_POLYGON);
+        } else {
+            e.setType(DXFEntity.TYPE_LINE);
+        }
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
         log.debug(e.toString(name, flag, lv.size(), c, visibility, DXFTables.defaultThickness));
@@ -163,7 +168,12 @@ public class DXFPolyline extends DXFEntity {
         if (geometry == null) {
             Coordinate[] ca = toCoordinateArray();
             if (ca != null && ca.length > 1) {
-                geometry = getUnivers().getGeometryFactory().createLineString(ca);
+                if (getType() == DXFEntity.TYPE_POLYGON) {
+                    LinearRing lr = getUnivers().getGeometryFactory().createLinearRing(ca);
+                    geometry = getUnivers().getGeometryFactory().createPolygon(lr, null);
+                } else {
+                    geometry = getUnivers().getGeometryFactory().createLineString(ca);
+                }
             } else {
                 addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
             }
