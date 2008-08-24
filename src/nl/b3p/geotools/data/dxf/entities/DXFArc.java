@@ -157,16 +157,15 @@ public class DXFArc extends DXFEntity {
 
     @Override
     public Geometry getGeometry() {
-        Geometry g = super.getGeometry();
-        if (g == null) {
+        if (geometry == null) {
             Coordinate[] ca = toCoordinateArray();
             if (ca != null && ca.length > 1) {
-                return getUnivers().getGeometryFactory().createLineString(ca);
+                geometry = getUnivers().getGeometryFactory().createLineString(ca);
             } else {
                 addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
             }
         }
-        return g;
+        return super.getGeometry();
     }
 
     public String toString(int c,

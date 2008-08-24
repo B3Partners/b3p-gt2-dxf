@@ -8,6 +8,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import org.geotools.data.DataSourceException;
@@ -19,11 +20,11 @@ import org.geotools.feature.FeatureType;
 import org.geotools.feature.FeatureTypes;
 import org.geotools.feature.IllegalAttributeException;
 import org.geotools.feature.type.GeometricAttributeType;
-import org.geotools.referencing.ReferencingFactoryFinder;
-import org.opengis.referencing.crs.CRSFactory;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.NamedIdentifier;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * @author Matthijs Laan, B3Partners
@@ -34,34 +35,8 @@ public class DXFFeatureReader implements FeatureReader {
     private FeatureType ft;
     private DXFUnivers theUnivers;
     private Iterator<DXFEntity> entityIterator;
-    public static String GEOCS_RDNEW_WKT;
-    public static String GEOCS_WSG84_WKT;
-    
 
-    static {
-        StringBuffer t = new StringBuffer();
-        t.append("GEOGCS[\"Amersfoort\",");
-        t.append("DATUM[\"Amersfoort\",");
-        t.append("SPHEROID[\"Bessel 1841\",6377397.155,299.1528128],");
-        t.append("TOWGS84[565.04,49.91,465.84,-0.40939438743923684,-0.35970519561431136,1.868491000350572,0.8409828680306614]");
-        t.append("],");
-        t.append("PRIMEM[\"Greenwich\",0],");
-        t.append("UNIT[\"degree\",0.01745329251994328]");
-        t.append("],");
-        t.append("PROJECTION[\"Oblique_Stereographic\"],");
-        t.append("PARAMETER[\"latitude_of_origin\",52.15616055555555],");
-        t.append("PARAMETER[\"central_meridian\",5.38763888888889],");
-        t.append("PARAMETER[\"scale_factor\",0.9999079],");
-        t.append("PARAMETER[\"false_easting\",155000],");
-        t.append("PARAMETER[\"false_northing\",463000],");
-        t.append("UNIT[\"metre\",1]");
-        t.append("]");
-        GEOCS_RDNEW_WKT = t.toString();
-
-        GEOCS_WSG84_WKT = "GEOGCS[\"LL84\",DATUM[\"WGS 84\",SPHEROID[\"WGS 84\",6378137,0],TOWGS84[0,0,0,0,0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"Degrees\",0.01745329252]]";
-    }
-
-    public DXFFeatureReader(DXFUnivers theUnivers) throws IOException, DXFParseException {
+    public DXFFeatureReader(DXFUnivers theUnivers, String typeName) throws IOException, DXFParseException {
         this.theUnivers = theUnivers;
 
         if (theUnivers == null) {
@@ -69,22 +44,35 @@ public class DXFFeatureReader implements FeatureReader {
         }
         entityIterator = theUnivers.theEntities.iterator();
 
-        createFeatureType();
+        createFeatureType(typeName);
     }
 
-    private void createFeatureType() throws DataSourceException {
+    private void createFeatureType(String typeName) throws DataSourceException {
         CoordinateReferenceSystem crs = null;
-        //TODO  er wordt nog geen crs opgehaald uit DXF, voorlopig 28992 default
-        String wkt = GEOCS_RDNEW_WKT;
-        log.debug("CRS WKT: " + wkt);
-
         try {
-            /* parse WKT */
-            CRSFactory crsFactory = ReferencingFactoryFinder.getCRSFactory(null);
-            crs = crsFactory.createFromWKT(wkt);
+            //TODO  er wordt nog geen crs opgehaald uit DXF, voorlopig 28992 default
+//            CRSFactory crsFactory = ReferencingFactoryFinder.getCRSFactory(null);
+            // Bij wkt is het belangrijk dat het een projectie betreft PROJCS en niet slechts een GEOCS, omdat dan de srid op -1 komt te staan in postgis
+//            String PROJCS_RDNEW_WKT = "PROJCS[\"Amersfoort / RD New\",GEOGCS[\"Amersfoort\",DATUM[\"Amersfoort\",SPHEROID[\"Bessel 1841\",6377397.155,299.1528128,AUTHORITY[\"EPSG\",\"7004\"]],AUTHORITY[\"EPSG\",\"6289\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4289\"]],PROJECTION[\"Oblique_Stereographic\"],PARAMETER[\"latitude_of_origin\",52.15616055555555],PARAMETER[\"central_meridian\",5.38763888888889],PARAMETER[\"scale_factor\",0.9999079],PARAMETER[\"false_easting\",155000],PARAMETER[\"false_northing\",463000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"28992\"]]";
+//            crs = crsFactory.createFromWKT(PROJCS_RDNEW_WKT);
+            crs = CRS.decode("EPSG:28992");
         } catch (Exception e) {
-            throw new DataSourceException("Error parsing CoordinateSystem WKT: \"" + wkt + "\"");
+            throw new DataSourceException("Error parsing CoordinateSystem!");
         }
+
+        int SRID = -1;
+        if (crs != null) {
+            try {
+                Set ident = crs.getIdentifiers();
+                if ((ident != null && !ident.isEmpty())) {
+                    String code = ((NamedIdentifier) ident.toArray()[0]).getCode();
+                    SRID = Integer.parseInt(code);
+                }
+            } catch (Exception e) {
+                log.error("SRID could not be determined from crs!");
+            }
+        }
+        log.info("SRID used by feature reader: " + SRID);
 
         try {
             GeometricAttributeType geometryType = new GeometricAttributeType("the_geom", Geometry.class, true, null, crs, null);
@@ -102,9 +90,9 @@ public class DXFFeatureReader implements FeatureReader {
                         AttributeTypeFactory.newAttributeType("entryLineNumber", Integer.class),
                         AttributeTypeFactory.newAttributeType("parseError", Boolean.class),
                         AttributeTypeFactory.newAttributeType("error", String.class)
-                    }, "dxf");
+                    }, typeName);
         } catch (Exception e) {
-            throw new DataSourceException("Error creating FeatureType", e);
+            throw new DataSourceException("Error creating FeatureType: " + typeName, e);
         }
     }
 

@@ -30,21 +30,22 @@ public abstract class DXFEntity implements DXFConstants {
     public static final int TYPE_LINE = 1;
     public static final int TYPE_POLYGON = 2;
     public static final int TYPE_UNSUPPORTED = -1;
-    private int type = TYPE_UNSUPPORTED;
-    private String _name = null;
-    private String key = null;
-    private String urlLink = null;
-    private boolean parseError = false;
-    private String errorDescription = null;
-    private Geometry geometry = null;
+    protected int type = TYPE_UNSUPPORTED;
+    /* feature write */
+    protected String _name = null;
+    protected String key = null;
+    protected String urlLink = null;
+    protected boolean parseError = false;
+    protected String errorDescription = null;
+    protected Geometry geometry = null;
     /* dxf read */
-    private DXFUnivers univers;
-    private int startingLineNumber = -1;
-    private DXFLineType _lineType;
-    private int _color;
-    private DXFLayer _refLayer;
-    private double _thickness;
-    private boolean visible = true;
+    protected DXFUnivers univers;
+    protected int startingLineNumber = -1;
+    protected DXFLineType _lineType;
+    protected int _color;
+    protected DXFLayer _refLayer;
+    protected double _thickness;
+    protected boolean visible = true;
 
     public DXFEntity(int c, DXFLayer l, int visibility, DXFLineType lineType, double thickness) {
         _lineType = lineType;
@@ -59,6 +60,14 @@ public abstract class DXFEntity implements DXFConstants {
         }
     }
 
+    public Geometry getGeometry() {
+        if (geometry == null) {
+            geometry = getUnivers().getErrorGeometry();
+            addError("error geometry created!");
+        }
+        return geometry;
+    }
+
     public String getName() {
         return _name;
     }
@@ -69,10 +78,6 @@ public abstract class DXFEntity implements DXFConstants {
 
     public String getUrlLink() {
         return urlLink;
-    }
-
-    public Geometry getGeometry() {
-        return geometry;
     }
 
     public boolean isParseError() {
@@ -408,5 +413,9 @@ public abstract class DXFEntity implements DXFConstants {
 
     public void setUrlLink(String urlLink) {
         this.urlLink = urlLink;
+    }
+
+    public void setGeometry(Geometry geometry) {
+        this.geometry = geometry;
     }
 }

@@ -14,6 +14,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.geotools.data.AbstractFileDataStore;
 import org.geotools.data.FeatureReader;
+import org.geotools.data.postgis.PostgisSQLBuilder;
 import org.geotools.feature.FeatureType;
 
 /**
@@ -62,7 +63,7 @@ public class DXFDataStore extends AbstractFileDataStore {
     }
 
     public String[] getTypeNames() throws IOException {
-        return new String[]{getURLTypeName(url)};
+        return new String[]{typeName};
     }
 
     static String getURLTypeName(URL url) throws IOException {
@@ -77,6 +78,8 @@ public class DXFDataStore extends AbstractFileDataStore {
             if (file.toLowerCase().endsWith(".dxf")) {
                 file = file.substring(0, file.length() - 4);
             }
+            /* replace to make valid table names */
+            file = file.replaceAll(" ", "_");
             return file;
         }
     }
@@ -98,7 +101,7 @@ public class DXFDataStore extends AbstractFileDataStore {
     public FeatureReader getFeatureReader() throws IOException {
         if (featureReader == null) {
             try {
-                featureReader = new DXFFeatureReader(theUnivers);
+                featureReader = new DXFFeatureReader(theUnivers, typeName);
             } catch (DXFParseException e) {
                 throw new IOException("DXF parse exception", e);
             }

@@ -138,11 +138,10 @@ public class DXFPoint extends DXFEntity {
 
     @Override
     public Geometry getGeometry() {
-        Geometry g = super.getGeometry();
-        if (g == null) {
-            return getUnivers().getGeometryFactory().createPoint(toCoordinate());
+        if (geometry == null) {
+           geometry = getUnivers().getGeometryFactory().createPoint(toCoordinate());
         }
-        return g;
+        return super.getGeometry();
     }
 
     public Coordinate toCoordinate() {

@@ -160,16 +160,15 @@ public class DXFPolyline extends DXFEntity {
 
     @Override
     public Geometry getGeometry() {
-        Geometry g = super.getGeometry();
-        if (g == null) {
+        if (geometry == null) {
             Coordinate[] ca = toCoordinateArray();
-            if (ca != null && ca.length>1) {
-                return getUnivers().getGeometryFactory().createLineString(ca);
+            if (ca != null && ca.length > 1) {
+                geometry = getUnivers().getGeometryFactory().createLineString(ca);
             } else {
-                addError("coordinate array faulty, size: " + (ca==null?0:ca.length));
+                addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
             }
         }
-        return g;
+        return super.getGeometry();
     }
 
     public Coordinate[] toCoordinateArray() {

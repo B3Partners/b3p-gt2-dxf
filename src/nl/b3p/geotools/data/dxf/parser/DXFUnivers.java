@@ -1,5 +1,7 @@
 package nl.b3p.geotools.data.dxf.parser;
 
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.PrecisionModel;
 import java.io.EOFException;
@@ -29,6 +31,7 @@ public class DXFUnivers implements DXFConstants {
     public Vector<DXFEntity> theEntities = new Vector<DXFEntity>();
     private DXFHeader _header;
     private GeometryFactory geometryFactory = null;
+    private Geometry errorGeometry = null;
 
     public DXFUnivers() {
     }
@@ -198,5 +201,16 @@ public class DXFUnivers implements DXFConstants {
 
     public void setGeometryFactory(GeometryFactory geometryFactory) {
         this.geometryFactory = geometryFactory;
+    }
+
+    public Geometry getErrorGeometry() {
+        if (errorGeometry==null && geometryFactory!=null) {
+            errorGeometry = geometryFactory.createPoint(new Coordinate(0.0, 0.0));
+        }
+        return errorGeometry;
+    }
+
+    public void setErrorGeometry(Geometry errorGeometry) {
+        this.errorGeometry = errorGeometry;
     }
 }
