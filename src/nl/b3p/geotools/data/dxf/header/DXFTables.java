@@ -17,8 +17,7 @@ public class DXFTables implements DXFConstants {
 
     private static final Log log = LogFactory.getLog(DXFTables.class);
     public static final double defaultThickness = 1.0f;
-    public static final float defautMotif[] = {1.0f, 0.0f};
-     public Vector<DXFLayer> theLayers = new Vector<DXFLayer>();
+    public Vector<DXFLayer> theLayers = new Vector<DXFLayer>();
     public Vector<DXFLineType> theLineTypes = new Vector<DXFLineType>();
 
     public DXFTables() {

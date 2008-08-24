@@ -25,12 +25,6 @@ public class DXFBlock extends DXFEntity implements DXFConstants {
     public String _name;
     public int _flag;
 
-    public DXFBlock() {
-        super(-1, null, 0, null, DXFTables.defaultThickness);
-        _name = DXFNameGenerator.getBlockName("myBlock.0");
-        theEntities = new Vector<DXFEntity>();
-    }
-
     public DXFBlock(double x, double y, int flag, String name, Vector<DXFEntity> ent, int c, DXFLayer l) {
         super(c, l, 0, null, DXFTables.defaultThickness);
         _point = new DXFPoint(x, y, c, l, 0, 1);

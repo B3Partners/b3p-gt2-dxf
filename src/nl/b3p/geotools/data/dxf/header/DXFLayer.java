@@ -17,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 public class DXFLayer extends DXFEntity implements DXFConstants {
 
     private static final Log log = LogFactory.getLog(DXFLayer.class);
+    
     public static final String DEFAULT_NAME = "default";
     public int _flag = 0;
     public Vector<DXFEntity> theEnt = new Vector<DXFEntity>();

@@ -186,8 +186,10 @@ public class DXFUnivers implements DXFConstants {
         for (int i = 0; i < _entForUpdate.size(); i++) {
             bro = _entForUpdate.get(i);
             DXFBlock b = findBlock(bro._blockName);
-            if (b != null) {
+            if (b != null && bro.getType()!=DXFEntity.TYPE_UNSUPPORTED) {
                 bro._refBlock = b;
+                //TODO simpelweg achteraan toevoegen? volgorde doet er toch niet toe?
+                theEntities.addAll(b.theEntities);
             }
         }
         _entForUpdate.removeAllElements();

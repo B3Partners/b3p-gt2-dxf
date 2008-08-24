@@ -10,7 +10,6 @@ import java.io.IOException;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
-import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
@@ -27,18 +26,6 @@ public class DXFLine extends DXFEntity {
         super(c, l, visibility, lineType, thickness);
         _a = a;
         _b = b;
-        setName("DXFLine");
-    }
-
-    public DXFLine() {
-        super(-1, null, 0, null, DXFTables.defaultThickness);
-        setName("DXFLine");
-    }
-
-    public DXFLine(DXFLine original) {
-        super(original.getColor(), original.getRefLayer(), 0, original.getLineType(), original.getThickness());
-        _a = new DXFPoint(original._a);
-        _b = new DXFPoint(original._b);
         setName("DXFLine");
     }
 

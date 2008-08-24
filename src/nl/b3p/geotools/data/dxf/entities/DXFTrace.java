@@ -13,18 +13,8 @@ public class DXFTrace extends DXFSolid {
 
     private static final Log log = LogFactory.getLog(DXFTrace.class);
 
-    public DXFTrace() {
-        super();
-        setName("DXFTrace");
-    }
-
     public DXFTrace(DXFPoint p1, DXFPoint p2, DXFPoint p3, DXFPoint p4, double thickness, int c, DXFLayer l, int visibility, DXFLineType lineType) {
         super(p1, p2, p3, p4, thickness, c, l, visibility, lineType);
-        setName("DXFTrace");
-    }
-
-    public DXFTrace(DXFTrace trace) {
-        super(trace._p1, trace._p2, trace._p3, trace._p4, trace.getThickness(), trace.getColor(), trace.getRefLayer(), 0, trace.getLineType());
         setName("DXFTrace");
     }
 

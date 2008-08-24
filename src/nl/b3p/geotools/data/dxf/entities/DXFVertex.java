@@ -24,25 +24,6 @@ public class DXFVertex extends DXFPoint {
         _bulge = b;
     }
 
-    public DXFVertex() {
-        super(0, 0, -1, null, 0, 1);
-        setName("DXFVertex");
-    }
-
-    public DXFVertex(DXFVertex v) {
-        this._bulge = v._bulge;
-        setColor(v.getColor());
-        this._point = v._point;
-        setRefLayer(v.getRefLayer());
-        setName("DXFVertex");
-    }
-
-    public DXFVertex(DXFVertex orig, boolean bis) {
-        super(orig._point.x, orig._point.y, orig.getColor(), orig.getRefLayer(), 0, 1);
-        _bulge = orig._bulge;
-        setName("DXFVertex");
-    }
-
     public static DXFVertex read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
         DXFLayer l = null;
         int visibility = 0, c = -1;
@@ -98,7 +79,7 @@ public class DXFVertex extends DXFPoint {
         }
 
         DXFVertex e = new DXFVertex(x, y, b, c, l, visibility);
-        e.setType(DXFEntity.TYPE_POLYGON);
+        e.setType(DXFEntity.TYPE_POINT);
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
         log.debug(e.toString(b, x, y, c, visibility));

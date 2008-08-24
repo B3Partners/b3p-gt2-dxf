@@ -31,11 +31,6 @@ public class DXFDimension extends DXFBlockReference {
         setName("DXFDimension");
     }
 
-    public DXFDimension() {
-        super(-1, null, 0, null, "", null);
-        setName("DXFDimension");
-    }
-
     public static DXFDimension read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
         String dimension = "", nomBlock = "";
         DXFDimension d = null;
@@ -81,7 +76,6 @@ public class DXFDimension extends DXFBlockReference {
                     break;
                 case NAME: //"2"
                     nomBlock = cvp.getStringValue();
-                    refBlock = univers.findBlock(nomBlock);
                     break;
                 case LINETYPE_NAME: //"6"
                     lineType = univers.findLType(cvp.getStringValue());
@@ -108,10 +102,8 @@ public class DXFDimension extends DXFBlockReference {
         d.setType(DXFEntity.TYPE_UNSUPPORTED);
         d.setStartingLineNumber(sln);
         d.setUnivers(univers);
+        univers.addRefBlockForUpdate(d);
 
-        if ((refBlock == null)) {
-            univers.addRefBlockForUpdate(d);
-        }
         log.debug(d.toString(dimension, angle, nomBlock, x, y, visibility, c));
         log.debug(">>Exit at line: " + br.getLineNumber());
         return d;

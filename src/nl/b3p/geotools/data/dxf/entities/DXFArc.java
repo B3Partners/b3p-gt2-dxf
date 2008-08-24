@@ -11,7 +11,6 @@ import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
-import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
@@ -33,22 +32,6 @@ public class DXFArc extends DXFEntity {
         _angle1 = a1;
         _angle2 = a2;
         setThickness(thickness);
-        setName("DXFArc");
-    }
-
-    public DXFArc() {
-        super(-1, null, 0, null, DXFTables.defaultThickness);
-        _point = new DXFPoint();
-        _radius = 0;
-        setName("DXFArc");
-    }
-
-    public DXFArc(DXFArc orig) {
-        super(orig.getColor(), orig.getRefLayer(), 0, orig.getLineType(), orig.getThickness());
-        _point = new DXFPoint(orig._point);
-        _radius = orig._radius;
-        _angle1 = orig._angle1;
-        _angle2 = orig._angle2;
         setName("DXFArc");
     }
 

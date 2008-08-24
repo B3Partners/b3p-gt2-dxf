@@ -28,7 +28,6 @@ public class DXFPoint extends DXFEntity {
             p = new Point2D.Double(0, 0);
         }
         _point = p;
-        setThickness(thickness);
         setName("DXFPoint");
     }
 
@@ -49,12 +48,6 @@ public class DXFPoint extends DXFEntity {
     public DXFPoint(double x, double y, int c, DXFLayer l, int visibility, double thickness) {
         super(c, l, visibility, null, DXFTables.defaultThickness);
         _point = new Point2D.Double(x, y);
-        setName("DXFPoint");
-    }
-
-    public DXFPoint(DXFPoint _a) {
-        super(_a.getColor(), _a.getRefLayer(), 0, null, DXFTables.defaultThickness);
-        _point = new Point2D.Double(_a.X(), _a.Y());
         setName("DXFPoint");
     }
 

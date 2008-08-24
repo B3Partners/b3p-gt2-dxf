@@ -24,17 +24,6 @@ public class DXFPolyline extends DXFEntity {
 
     private static final Log log = LogFactory.getLog(DXFPolyline.class);
     public String _id;
-    /*
-    Polyline flag (bit-coded); default is 0:
-    1 = This is a closed polyline (or a polygon mesh closed in the M direction).
-    2 = Curve-fit vertices have been added.
-    4 = Spline-fit vertices have been added.
-    8 = This is a 3D polyline.
-    16 = This is a 3D polygon mesh.
-    32 = The polygon mesh is closed in the N direction.
-    64 = The polyline is a polyface mesh.
-    128 = The linetype pattern is generated continuously around the vertices of this polyline.
-     */
     public int _flag = 0;
     public Vector<DXFVertex> theVertex = new Vector<DXFVertex>();
 
@@ -47,27 +36,6 @@ public class DXFPolyline extends DXFEntity {
         }
         theVertex = v;
         _flag = flag;
-        setName("DXFPolyline");
-    }
-
-    public DXFPolyline(DXFLayer l) {
-        super(-1, l, 0, null, DXFTables.defaultThickness);
-        setName("DXFPolyline");
-    }
-
-    public DXFPolyline() {
-        super(-1, null, 0, null, DXFTables.defaultThickness);
-        setName("DXFPolyline");
-    }
-
-    public DXFPolyline(DXFPolyline orig) {
-        super(orig.getColor(), orig.getRefLayer(), 0, orig.getLineType(), orig.getThickness());
-        _id = orig._id;
-
-        for (int i = 0; i < orig.theVertex.size(); i++) {
-            theVertex.add(new DXFVertex((DXFVertex) orig.theVertex.elementAt(i), true));
-        }
-        _flag = orig._flag;
         setName("DXFPolyline");
     }
 

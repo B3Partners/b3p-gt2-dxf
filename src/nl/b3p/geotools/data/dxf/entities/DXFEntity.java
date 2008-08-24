@@ -3,6 +3,7 @@ package nl.b3p.geotools.data.dxf.entities;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import com.vividsolutions.jts.geom.Geometry;
+import nl.b3p.geotools.data.dxf.header.DXFBlockReference;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
 import nl.b3p.geotools.data.dxf.parser.DXFColor;
@@ -36,9 +37,25 @@ public abstract class DXFEntity implements DXFConstants {
     protected boolean visible = true;
 
     public DXFEntity(int c, DXFLayer l, int visibility, DXFLineType lineType, double thickness) {
-        _lineType = lineType;
+
         _refLayer = l;
+
+        if (lineType != null && lineType._name.equalsIgnoreCase("BYLAYER") && _refLayer != null) {
+            //TODO waar zit linetype in layer?
+        }
+        _lineType = lineType;
+
+        if (!(this instanceof DXFBlockReference) && !(this instanceof DXFLayer)) {
+            if ((c < 0) || (c == 255 && _refLayer != null)) {
+                if (_refLayer == null) {
+                    c = DXFColor.getDefaultColorIndex();
+                } else {
+                    c = _refLayer._color;
+                }
+            }
+        }
         _color = c;
+
         _thickness = thickness;
 
         if (visibility == 0) {
@@ -176,7 +193,6 @@ public abstract class DXFEntity implements DXFConstants {
             errorDescription += "; " + msg;
         }
     }
-
 
     public void setParseError(boolean parseError) {
         this.parseError = parseError;

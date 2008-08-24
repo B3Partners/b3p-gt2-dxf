@@ -3,7 +3,6 @@ package nl.b3p.geotools.data.dxf.entities;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
-import java.awt.font.TextAttribute;
 import java.awt.geom.Rectangle2D;
 import java.io.EOFException;
 import java.io.IOException;
@@ -45,96 +44,9 @@ public class DXFText extends DXFEntity {
         setName("DXFText");
     }
 
-    public DXFText() {
-        super(-1, null, 0, null, DXFTables.defaultThickness);
-        setName("DXFText");
-    }
-
-    public DXFText(DXFText text) {
-        super(text.getColor(), text.getRefLayer(), 0, text.getLineType(), text.getThickness());
-        _point = new DXFPoint(text._point.X(), text._point.Y(), text.getColor(), text.getRefLayer(), 0, text.getThickness());
-        _value = text._value;
-        _rotation = text._rotation;
-        _height = text._height;
-        _align = text._align;
-        _style = text._style;
-        _angle = text._angle;
-        _zoomfactor = text._zoomfactor;
-        setName("DXFText");
-    }
-
-    public void setVal(String s) {
-        _value = s;
-    }
-
-    public String getVal() {
-        return _value;
-    }
-
-    public void appendVal(char c) {
-        _value += c;
-    }
-
-    public void delChar() {
-        _value = _value.substring(0, _value.length() - 1);
-    }
-
-    private double getWeight(double zoomfactor) {
-
-        double value = TextAttribute.WEIGHT_REGULAR;
-
-        if (zoomfactor <= 0.5) {
-            value = TextAttribute.WEIGHT_EXTRA_LIGHT;
-        } else if (zoomfactor <= 0.75) {
-            value = TextAttribute.WEIGHT_LIGHT;
-        } else if (zoomfactor <= 0.875) {
-            value = TextAttribute.WEIGHT_DEMILIGHT;
-        } else if (zoomfactor <= 1) {
-            value = TextAttribute.WEIGHT_REGULAR;
-        } else if (zoomfactor <= 1.25) {
-            value = TextAttribute.WEIGHT_SEMIBOLD;
-        } else if (zoomfactor <= 1.5) {
-            value = TextAttribute.WEIGHT_MEDIUM;
-        } else if (zoomfactor <= 1.75) {
-            value = TextAttribute.WEIGHT_DEMIBOLD;
-        } else if (zoomfactor <= 2.0) {
-            value = TextAttribute.WEIGHT_BOLD;
-        } else if (zoomfactor <= 2.25) {
-            value = TextAttribute.WEIGHT_HEAVY;
-        } else if (zoomfactor <= 2.50) {
-            value = TextAttribute.WEIGHT_EXTRABOLD;
-        } else {
-            value = TextAttribute.WEIGHT_ULTRABOLD;
-        }
-
-        return value;
-    }
-
-    private double getWidth(double zoomfactor) {
-
-        double value = TextAttribute.WIDTH_REGULAR;
-
-        if (zoomfactor <= 0.75) {
-            value = TextAttribute.WIDTH_CONDENSED;
-        } else if (zoomfactor <= 0.875) {
-            value = TextAttribute.WIDTH_SEMI_CONDENSED;
-        } else if (zoomfactor <= 1.0) {
-            value = TextAttribute.WIDTH_REGULAR;
-        } else if (zoomfactor <= 1.25) {
-            value = TextAttribute.WIDTH_SEMI_EXTENDED;
-        } else {
-            value = TextAttribute.WIDTH_EXTENDED;
-        }
-
-        return value;
-    }
-
     public static DXFText read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
         DXFLayer l = null;
-        String ligne = "",
-                ligne_temp = "",
-                value = "",
-                style = "STANDARD";
+        String value = "", style = "STANDARD";
         int visibility = 0, align = 0, c = -1;
         DXFLineType lineType = null;
         double x = 0,

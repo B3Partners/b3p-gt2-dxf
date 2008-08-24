@@ -16,7 +16,6 @@ public class DXFLineType {
 
     private static final Log log = LogFactory.getLog(DXFLineType.class);
     public static final String DEFAULT_NAME = "default";
-    private float _motif[] = parseTxt("_");
     public String _name = "DXFLineType";                       // 2
     public String _value = "";					// 3
     public float _length = 0;					// 40
@@ -35,7 +34,6 @@ public class DXFLineType {
         if (spacing != null) {
             _spacing = spacing;
         }
-        _motif = parseDXF();
     }
 
     public static DXFLineType read(DXFLineNumberReader br) throws IOException {
@@ -110,71 +108,5 @@ public class DXFLineType {
         s.append(count);
         s.append("]");
         return s.toString();
-    }
-
-    public static float[] parseTxt(String s) {
-        boolean no = false;
-        boolean incr = false;
-        s = s.trim();
-        if (s.length() % 2 == 1) {
-            s += " ";
-        }
-        char[] strChr = new char[s.length()];
-        strChr = s.toCharArray();
-        int end = strChr.length - (strChr.length % 2);
-
-        float[] floatLine = new float[end * 2];
-        int j = 0;
-        for (int i = 0; i < floatLine.length; i++) {
-            if (strChr[j] == ' ') {
-                floatLine[i] = 0.0f;
-                incr = true;
-            } else if (strChr[j] == '.') {
-                floatLine[i] = 1.0f;
-            } else if (strChr[j] == '-') {
-                floatLine[i] = 5.0f;
-            } else if (strChr[j] == '_') {
-                floatLine[i] = 10.0f;
-                no = true;
-            } else {
-                floatLine[i] = 3.0f;
-            }
-            i++;
-            if (no) {
-                floatLine[i] = 0.0f;
-            } else if (incr) {
-                floatLine[i] = 10.0f;
-            } else {
-                floatLine[i] = 3.0f;
-            }
-            j++;
-            no = false;
-            incr = false;
-        }
-        if (floatLine.length > 0) {
-            return floatLine;
-        } else {
-            return new float[]{1.0f, 0.0f};
-        }
-    }
-
-    public float[] parseDXF() {
-        if (_count != this._spacing.size()) {
-            return DXFTables.defautMotif;
-        }
-        float[] ret = new float[(int) _count];
-
-        for (int i = 0; i < _count; i++) {
-            ret[i] = ((Math.abs(_spacing.elementAt(i)) * 100) / this._length) / 10;
-        }
-
-        if (ret.length == 0) {
-            ret = DXFTables.defautMotif;
-        }
-        return ret;
-    }
-
-    public float[] getMotif() {
-        return _motif;
     }
 }

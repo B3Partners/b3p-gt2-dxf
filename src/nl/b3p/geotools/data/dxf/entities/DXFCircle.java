@@ -4,7 +4,6 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.LinearRing;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
-import java.awt.geom.Ellipse2D;
 import java.io.EOFException;
 import java.io.IOException;
 
@@ -14,7 +13,6 @@ import java.util.List;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
-import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
@@ -24,7 +22,6 @@ import org.apache.commons.logging.LogFactory;
 public class DXFCircle extends DXFEntity {
 
     private static final Log log = LogFactory.getLog(DXFCircle.class);
-    private Ellipse2D.Double _e = new Ellipse2D.Double();
     public DXFPoint _point = new DXFPoint();
     public double _radius = 0;
 
@@ -32,18 +29,6 @@ public class DXFCircle extends DXFEntity {
         super(c, l, visibility, lineType, thickness);
         _point = p;
         _radius = r;
-        setName("DXFCircle");
-    }
-
-    public DXFCircle() {
-        super(0, null, 0, null, DXFTables.defaultThickness);
-        setName("DXFCircle");
-    }
-
-    public DXFCircle(DXFCircle orig) {
-        super(orig.getColor(), orig.getRefLayer(), 0, orig.getLineType(), orig.getThickness());
-        _point = new DXFPoint(orig._point);
-        _radius = orig._radius;
         setName("DXFCircle");
     }
 

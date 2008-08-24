@@ -8,7 +8,6 @@ import java.io.IOException;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
-import nl.b3p.geotools.data.dxf.header.DXFTables;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
@@ -23,11 +22,6 @@ public class DXFSolid extends DXFEntity {
     public DXFPoint _p3 = new DXFPoint();
     public DXFPoint _p4 = null;
 
-    public DXFSolid() {
-        super(-1, null, 0, null, DXFTables.defaultThickness);
-        setName("DXFSolid");
-   }
-
     public DXFSolid(DXFPoint p1, DXFPoint p2, DXFPoint p3, DXFPoint p4,
             double thickness, int c, DXFLayer l, int visibility, DXFLineType lineType) {
         super(c, l, visibility, lineType, thickness);
@@ -41,16 +35,6 @@ public class DXFSolid extends DXFEntity {
         } else {
             _p4 = p4;
         }
-        setName("DXFSolid");
-    }
-
-    public DXFSolid(DXFSolid solid) {
-        super(solid.getColor(), solid.getRefLayer(), 0, solid.getLineType(), solid.getThickness());
-
-        _p1 = new DXFPoint(solid._p1);
-        _p2 = new DXFPoint(solid._p2);
-        _p3 = new DXFPoint(solid._p3);
-        _p4 = new DXFPoint(solid._p4);
         setName("DXFSolid");
     }
 
