@@ -6,7 +6,6 @@
 package nl.b3p.geotools.data.dxf.entities;
 
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
-import java.awt.geom.GeneralPath;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Vector;
@@ -27,7 +26,7 @@ public class DXFLwPolyline extends DXFEntity {
     private static final Log log = LogFactory.getLog(DXFLwPolyline.class);
     public String _id = "DXFLwPolyline";
     public int _flag = 0;
-    public Vector<DXFLwVertex> _myVertex = new Vector<DXFLwVertex>();
+    public Vector<DXFLwVertex> theVertex = new Vector<DXFLwVertex>();
 
     public DXFLwPolyline(String name, int flag, int c, DXFLayer l, Vector<DXFLwVertex> v, int visibility, DXFLineType lineType, double thickness) {
         super(c, l, visibility, lineType, thickness);
@@ -36,7 +35,7 @@ public class DXFLwPolyline extends DXFEntity {
         if (v == null) {
             v = new Vector<DXFLwVertex>();
         }
-        _myVertex = v;
+        theVertex = v;
         _flag = flag;
         setName("DXFLwPolyline");
     }
@@ -55,8 +54,8 @@ public class DXFLwPolyline extends DXFEntity {
         super(orig.getColor(), orig.getRefLayer(), 0, orig.getLineType(), orig.getThickness());
         _id = orig._id;
 
-        for (int i = 0; i < orig._myVertex.size(); i++) {
-            _myVertex.add(new DXFLwVertex((DXFLwVertex) orig._myVertex.elementAt(i), true));
+        for (int i = 0; i < orig.theVertex.size(); i++) {
+            theVertex.add(new DXFLwVertex((DXFLwVertex) orig.theVertex.elementAt(i), true));
         }
         _flag = orig._flag;
         setName("DXFLwPolyline");

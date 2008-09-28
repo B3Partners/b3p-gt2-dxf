@@ -90,7 +90,7 @@ public class DXFVertex extends DXFPoint {
     public String toString(double b, double x, double y, int c, int visibility) {
         StringBuffer s = new StringBuffer();
         s.append("DXFVertex [");
-        s.append("b: ");
+        s.append("bulge: ");
         s.append(b + ", ");
         s.append("x: ");
         s.append(x + ", ");

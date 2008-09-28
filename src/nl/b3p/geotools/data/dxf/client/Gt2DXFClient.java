@@ -1,11 +1,13 @@
 package nl.b3p.geotools.data.dxf.client;
 
+import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import nl.b3p.geotools.data.dxf.DXFDataStore;
+import nl.b3p.geotools.data.dxf.entities.DXFLwVertex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.PropertyConfigurator;
@@ -53,18 +55,18 @@ public class Gt2DXFClient {
         Properties p2 = new Properties();
         p2.load(dbconfig_url.openStream());
         Map dbconfig = new HashMap();
-        dbconfig.put(PostgisDataStoreFactory.DBTYPE.key, p2.getProperty("dbtype","postgis"));
-        dbconfig.put(PostgisDataStoreFactory.HOST.key, p2.getProperty("host","localhost"));
-        dbconfig.put(PostgisDataStoreFactory.PORT.key, Integer.valueOf(p2.getProperty("port","5432")));
-        dbconfig.put(PostgisDataStoreFactory.SCHEMA.key, p2.getProperty("schema","public"));
-        dbconfig.put(PostgisDataStoreFactory.DATABASE.key, p2.getProperty("database","upload"));
-        dbconfig.put(PostgisDataStoreFactory.USER.key, p2.getProperty("user","postgres"));
-        dbconfig.put(PostgisDataStoreFactory.PASSWD.key, p2.getProperty("passwd","postgres"));
-        
+        dbconfig.put(PostgisDataStoreFactory.DBTYPE.key, p2.getProperty("dbtype", "postgis"));
+        dbconfig.put(PostgisDataStoreFactory.HOST.key, p2.getProperty("host", "localhost"));
+        dbconfig.put(PostgisDataStoreFactory.PORT.key, Integer.valueOf(p2.getProperty("port", "5432")));
+        dbconfig.put(PostgisDataStoreFactory.SCHEMA.key, p2.getProperty("schema", "public"));
+        dbconfig.put(PostgisDataStoreFactory.DATABASE.key, p2.getProperty("database", "upload"));
+        dbconfig.put(PostgisDataStoreFactory.USER.key, p2.getProperty("user", "postgres"));
+        dbconfig.put(PostgisDataStoreFactory.PASSWD.key, p2.getProperty("passwd", "postgres"));
+
         //Voor oracle support zie: http://geoserver.sourceforge.net/documentation/user/advanced.html#oracle
         log.info("db configured!");
 
-        URL dxf_url = c.getResource("/VM50.dxf");
+        URL dxf_url = c.getResource("/Kadaster_2008.dxf");
         DXFDataStore dataStore2Read = new DXFDataStore(dxf_url);
         log.info("dxf file read!");
         write2DB(dataStore2Read, dbconfig);
