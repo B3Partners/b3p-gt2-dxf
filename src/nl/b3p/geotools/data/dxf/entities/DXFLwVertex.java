@@ -27,24 +27,37 @@ public class DXFLwVertex extends DXFPoint {
     public DXFLwVertex(Point2D.Double p, double bulge) {
         super(p);
         this._bulge = bulge;
-        setName("DXFLwPolyline");
+        setName("DXFLwVertex");
     }
 
     public DXFLwVertex(double x, double y, double bulge) {
         super(new Point2D.Double(x, y));
         this._bulge = bulge;
-        setName("DXFLwPolyline");
+        setName("DXFLwVertex");
     }
 
     public DXFLwVertex(DXFLwVertex orig, boolean bis) {
         super(orig._point.x, orig._point.y, orig.getColor(), orig.getRefLayer(), 0, 1);
         _bulge = orig._bulge;
-        setName("DXFLwPolyline");
+        setName("DXFLwVertex");
 
     }
 
     public double getBulge() {
         return _bulge;
+    }
+    
+    public String toString(double b, double x, double y) {
+        StringBuffer s = new StringBuffer();
+        s.append("DXFLwVertex [");
+        s.append("bulge: ");
+        s.append(b + ", ");
+        s.append("x: ");
+        s.append(x + ", ");
+        s.append("y: ");
+        s.append(y);
+         s.append("]");
+        return s.toString();
     }
     
     /*

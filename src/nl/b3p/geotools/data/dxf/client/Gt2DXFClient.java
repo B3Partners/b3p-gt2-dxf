@@ -1,13 +1,11 @@
 package nl.b3p.geotools.data.dxf.client;
 
-import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import nl.b3p.geotools.data.dxf.DXFDataStore;
-import nl.b3p.geotools.data.dxf.entities.DXFLwVertex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.PropertyConfigurator;
