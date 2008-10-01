@@ -14,7 +14,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.geotools.data.AbstractFileDataStore;
 import org.geotools.data.FeatureReader;
-import org.geotools.data.postgis.PostgisSQLBuilder;
 import org.geotools.feature.FeatureType;
 
 /**
@@ -36,11 +35,14 @@ public class DXFDataStore extends AbstractFileDataStore {
     private URL url;
     private String typeName;
     private FeatureReader featureReader;
+    private String srs;
+    
     public final DXFUnivers theUnivers;
 
-    public DXFDataStore(URL url) throws IOException {
+    public DXFDataStore(URL url, String srs) throws IOException {
         this.url = url;
         this.typeName = getURLTypeName(url);
+        this.srs = srs;
 
         CountingInputStream cis = null;
         DXFLineNumberReader lnr = null;
@@ -101,7 +103,7 @@ public class DXFDataStore extends AbstractFileDataStore {
     public FeatureReader getFeatureReader() throws IOException {
         if (featureReader == null) {
             try {
-                featureReader = new DXFFeatureReader(theUnivers, typeName);
+                featureReader = new DXFFeatureReader(theUnivers, typeName, srs);
             } catch (DXFParseException e) {
                 throw new IOException("DXF parse exception", e);
             }

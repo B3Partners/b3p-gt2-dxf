@@ -65,7 +65,7 @@ public class Gt2DXFClient {
         log.info("db configured!");
 
         URL dxf_url = c.getResource("/Kadaster_2008.dxf");
-        DXFDataStore dataStore2Read = new DXFDataStore(dxf_url);
+        DXFDataStore dataStore2Read = new DXFDataStore(dxf_url, "EPSG:28992");
         log.info("dxf file read!");
         write2DB(dataStore2Read, dbconfig);
 

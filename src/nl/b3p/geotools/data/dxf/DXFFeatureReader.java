@@ -36,7 +36,7 @@ public class DXFFeatureReader implements FeatureReader {
     private DXFUnivers theUnivers;
     private Iterator<DXFEntity> entityIterator;
 
-    public DXFFeatureReader(DXFUnivers theUnivers, String typeName) throws IOException, DXFParseException {
+    public DXFFeatureReader(DXFUnivers theUnivers, String typeName, String srs) throws IOException, DXFParseException {
         this.theUnivers = theUnivers;
 
         if (theUnivers == null) {
@@ -44,20 +44,15 @@ public class DXFFeatureReader implements FeatureReader {
         }
         entityIterator = theUnivers.theEntities.iterator();
 
-        createFeatureType(typeName);
+        createFeatureType(typeName, srs);
     }
 
-    private void createFeatureType(String typeName) throws DataSourceException {
+    private void createFeatureType(String typeName, String srs) throws DataSourceException {
         CoordinateReferenceSystem crs = null;
         try {
-            //TODO  er wordt nog geen crs opgehaald uit DXF, voorlopig 28992 default
-//            CRSFactory crsFactory = ReferencingFactoryFinder.getCRSFactory(null);
-            // Bij wkt is het belangrijk dat het een projectie betreft PROJCS en niet slechts een GEOCS, omdat dan de srid op -1 komt te staan in postgis
-//            String PROJCS_RDNEW_WKT = "PROJCS[\"Amersfoort / RD New\",GEOGCS[\"Amersfoort\",DATUM[\"Amersfoort\",SPHEROID[\"Bessel 1841\",6377397.155,299.1528128,AUTHORITY[\"EPSG\",\"7004\"]],AUTHORITY[\"EPSG\",\"6289\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4289\"]],PROJECTION[\"Oblique_Stereographic\"],PARAMETER[\"latitude_of_origin\",52.15616055555555],PARAMETER[\"central_meridian\",5.38763888888889],PARAMETER[\"scale_factor\",0.9999079],PARAMETER[\"false_easting\",155000],PARAMETER[\"false_northing\",463000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AUTHORITY[\"EPSG\",\"28992\"]]";
-//            crs = crsFactory.createFromWKT(PROJCS_RDNEW_WKT);
-            crs = CRS.decode("EPSG:28992");
+            crs = CRS.decode(srs);
         } catch (Exception e) {
-            throw new DataSourceException("Error parsing CoordinateSystem!");
+            throw new DataSourceException("Error parsing CoordinateSystem srs: \"" + srs + "\"");
         }
 
         int SRID = -1;

@@ -17,6 +17,9 @@ import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.DataStoreFactorySpi.Param;
 import org.geotools.data.FileDataStoreFactorySpi;
+import org.geotools.referencing.CRS;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.NoSuchAuthorityCodeException;
 
 /**
  * @author Matthijs Laan, B3Partners
@@ -25,6 +28,7 @@ public class DXFDataStoreFactory implements FileDataStoreFactorySpi {
     private static final Log log = LogFactory.getLog(DXFDataStoreFactory.class);
 
     public static final DataStoreFactorySpi.Param PARAM_URL = new Param("url", URL.class, "url to a .dxf file");    
+    public static final DataStoreFactorySpi.Param PARAM_SRS = new Param("srs", String.class, "override srs");    
     
     public String getDisplayName() {
         return "DXF File";
@@ -46,6 +50,13 @@ public class DXFDataStoreFactory implements FileDataStoreFactorySpi {
     }
 
     /**
+     * @return true if srs can be resolved
+     */
+    public boolean canProcess(String srs) throws NoSuchAuthorityCodeException, FactoryException {
+        return CRS.decode(srs) != null;
+    }
+
+    /**
      * @return true if the file in the url param exists
      */
     public boolean canProcess(Map params) {
@@ -54,6 +65,18 @@ public class DXFDataStoreFactory implements FileDataStoreFactorySpi {
             try {
                 URL url = (URL)PARAM_URL.lookUp(params);
                 result = canProcess(url);
+            } catch (IOException ioe) {
+                /* return false on any exception */
+            }
+        }
+        if (result && params.containsKey(PARAM_SRS.key)) {
+            try {
+                String srs = (String) PARAM_SRS.lookUp(params);
+                result = canProcess(srs);
+            } catch (NoSuchAuthorityCodeException ex) {
+                /* return false on any exception */
+            } catch (FactoryException ex) {
+                /* return false on any exception */
             } catch (IOException ioe) {
                 /* return false on any exception */
             }
@@ -97,8 +120,7 @@ public class DXFDataStoreFactory implements FileDataStoreFactorySpi {
         if(!canProcess(params)) {
             throw new FileNotFoundException( "DXF file not found: " + params);
         }
-        /* XXX use param for GeometryFactory?... */
-        return new DXFDataStore((URL)params.get(PARAM_URL.key));
+        return new DXFDataStore((URL)params.get(PARAM_URL.key), (String)params.get(PARAM_SRS.key));
     }
 
     public DataStore createNewDataStore(Map params) throws IOException {
