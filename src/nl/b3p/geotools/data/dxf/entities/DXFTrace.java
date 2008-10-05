@@ -27,7 +27,7 @@ public class DXFTrace extends DXFSolid {
         if (!s.isVisible()) {
             visibility = 1;
         }
-        DXFTrace e = new DXFTrace(s._p1, s._p2, s._p3, s._p4,s.getThickness(), s.getColor(), s.getRefLayer(), visibility, s.getLineType());
+        DXFTrace e = new DXFTrace(s._p1, s._p2, s._p3, s._p4, s.getThickness(), s.getColor(), s.getRefLayer(), visibility, s.getLineType());
         e.setType(DXFEntity.TYPE_UNSUPPORTED);
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
@@ -59,5 +59,10 @@ public class DXFTrace extends DXFSolid {
         s.append(", ");
         s.append("]");
         return s.toString();
+    }
+
+    @Override
+    public DXFEntity translate(double x, double y) {
+        return this;
     }
 }

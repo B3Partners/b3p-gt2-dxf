@@ -132,7 +132,7 @@ public class DXFPoint extends DXFEntity {
     @Override
     public Geometry getGeometry() {
         if (geometry == null) {
-           geometry = getUnivers().getGeometryFactory().createPoint(toCoordinate());
+            geometry = getUnivers().getGeometryFactory().createPoint(toCoordinate());
         }
         return super.getGeometry();
     }
@@ -160,5 +160,11 @@ public class DXFPoint extends DXFEntity {
         s.append(thickness);
         s.append("]");
         return s.toString();
+    }
+
+    @Override
+    public DXFEntity translate(double x, double y) {
+//        return new DXFPoint(_point.getX() - x, _point.getY() + y, _color, _refLayer, (visible ? 1 : 0), _thickness);
+        return this;
     }
 }

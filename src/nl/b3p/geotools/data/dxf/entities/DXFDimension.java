@@ -129,4 +129,9 @@ public class DXFDimension extends DXFBlockReference {
         s.append("]");
         return s.toString();
     }
+
+    @Override
+    public DXFEntity translate(double x, double y) {
+        return this;
+    }
 }

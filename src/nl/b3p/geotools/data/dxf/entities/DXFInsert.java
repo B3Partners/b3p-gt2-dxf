@@ -72,14 +72,14 @@ public class DXFInsert extends DXFBlockReference {
                 case Y_1: //"20"
                     y = cvp.getDoubleValue();
                     break;
+                case COLOR: //"62"
+                    c = cvp.getShortValue();
+                    break;
                 case VISIBILITY: //"60"
                     visibility = cvp.getShortValue();
                     break;
                 case LINETYPE_NAME: //"6"
                     lineType = univers.findLType(cvp.getStringValue());
-                    break;
-                case COLOR: //"62"
-                    c = cvp.getShortValue();
                     break;
                 default:
                     break;
@@ -87,37 +87,37 @@ public class DXFInsert extends DXFBlockReference {
         }
 
         m = new DXFInsert(x, y, nomBlock, refBlock, l, visibility, c, lineType);
-        m.setType(DXFEntity.TYPE_UNSUPPORTED);
+        m.setType(DXFEntity.TYPE_POINT);
         m.setStartingLineNumber(sln);
         m.setUnivers(univers);
         univers.addRefBlockForUpdate(m);
-
-        log.debug(m.toString());
+        log.debug(m.toString(x, y, visibility, c, lineType));
+        log.debug(">>Exit at line: " + br.getLineNumber());
         return m;
     }
 
-    public String toString() {
+    public String toString(double x, double y, int visibility, int c, DXFLineType lineType) {
         StringBuffer s = new StringBuffer();
         s.append("DXFInsert [");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
-        s.append(": ");
-        s.append(", ");
+        s.append("x: ");
+        s.append(x + ", ");
+        s.append("y: ");
+        s.append(y + ", ");
+        s.append("visibility: ");
+        s.append(visibility + ", ");
+        s.append("color: ");
+        s.append(c + ", ");
+        s.append("line type: ");
+        if (lineType != null) {
+            s.append(lineType._name);
+        }
         s.append("]");
         return s.toString();
     }
+    
+    @Override
+    public DXFEntity translate(double x, double y) {
+        return this;
+    }
+    
 }

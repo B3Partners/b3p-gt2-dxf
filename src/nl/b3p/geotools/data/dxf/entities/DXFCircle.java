@@ -158,4 +158,9 @@ public class DXFCircle extends DXFEntity {
         s.append("]");
         return s.toString();
     }
+
+    @Override
+    public DXFEntity translate(double x, double y) {
+        return this;
+    }
 }

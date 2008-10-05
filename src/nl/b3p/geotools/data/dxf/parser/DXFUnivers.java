@@ -6,6 +6,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.PrecisionModel;
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Vector;
 
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
@@ -186,11 +187,23 @@ public class DXFUnivers implements DXFConstants {
         for (int i = 0; i < _entForUpdate.size(); i++) {
             bro = _entForUpdate.get(i);
             DXFBlock b = findBlock(bro._blockName);
-            if (b != null && bro.getType()!=DXFEntity.TYPE_UNSUPPORTED) {
-                bro._refBlock = b;
-                //TODO simpelweg achteraan toevoegen? volgorde doet er toch niet toe?
-                theEntities.addAll(b.theEntities);
+            if (b != null && bro.getType() != DXFEntity.TYPE_UNSUPPORTED) {
+                double x = b._point.X();
+                double y = b._point.Y();
+                Vector<DXFEntity> refBlockEntities = b.theEntities;
+                if (refBlockEntities != null) {
+                    Iterator it = refBlockEntities.iterator();
+                    while (it.hasNext()) {
+                        DXFEntity e = (DXFEntity)it.next();
+                        theEntities.add(e.translate(x,y));
+                        //TODO refblock/Insert in block mag ook!
+                    }
+                }
+            } else {
+                log.error("can not update refblock: " + bro.getName() + " at " + bro.getStartingLineNumber());
             }
+            // Refblock/Insert zelf verwijderen
+            theEntities.remove(bro);
         }
         _entForUpdate.removeAllElements();
     }

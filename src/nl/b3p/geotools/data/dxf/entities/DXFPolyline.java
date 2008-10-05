@@ -169,5 +169,10 @@ public class DXFPolyline extends DXFEntity {
          * */
         return lc.toArray(new Coordinate[]{});
     }
+
+    @Override
+    public DXFEntity translate(double x, double y) {
+        return this;
+    }
 }
 

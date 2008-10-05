@@ -65,10 +65,12 @@ public abstract class DXFEntity implements DXFConstants {
         }
     }
 
+    abstract public DXFEntity translate(double x, double y);
+    
     public Geometry getGeometry() {
         if (geometry == null) {
             geometry = getUnivers().getErrorGeometry();
-            addError("error geometry created!");
+            addError("error geometry created for: " + this.getClass().toString());
         }
         return geometry;
     }

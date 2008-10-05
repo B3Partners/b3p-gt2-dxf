@@ -130,7 +130,7 @@ public class DXFText extends DXFEntity {
 
         }
         DXFText e = new DXFText(x, y, value, rotation, thickness, height, align, style, c, l, angle, zoomfactor, visibility, lineType);
-        e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        e.setType(DXFEntity.TYPE_POINT);
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
         /* TODO hack voor label */
@@ -186,4 +186,10 @@ public class DXFText extends DXFEntity {
         s.append("]");
         return s.toString();
     }
+    
+    @Override
+    public DXFEntity translate(double x, double y) {
+        return this;
+    }
+    
 }
