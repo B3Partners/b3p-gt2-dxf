@@ -81,9 +81,9 @@ public class DXFFeatureReader implements FeatureReader {
                         AttributeTypeFactory.newAttributeType("color", String.class),
                         AttributeTypeFactory.newAttributeType("layer", String.class),
                         AttributeTypeFactory.newAttributeType("thickness", Double.class),
-                        AttributeTypeFactory.newAttributeType("visible", Boolean.class),
+                        AttributeTypeFactory.newAttributeType("visible", Integer.class),
                         AttributeTypeFactory.newAttributeType("entryLineNumber", Integer.class),
-                        AttributeTypeFactory.newAttributeType("parseError", Boolean.class),
+                        AttributeTypeFactory.newAttributeType("parseError", Integer.class),
                         AttributeTypeFactory.newAttributeType("error", String.class)
                     }, typeName);
         } catch (Exception e) {
@@ -109,9 +109,9 @@ public class DXFFeatureReader implements FeatureReader {
                     ent.getColorRGB(),
                     ent.getRefLayerName(),
                     new Double(ent.getThickness()),
-                    new Boolean(ent.isVisible()),
+                    new Integer(ent.isVisible()?1:0),
                     new Integer(ent.getStartingLineNumber()),
-                    new Boolean(ent.isParseError()),
+                    new Integer(ent.isParseError()?1:0),
                     ent.getErrorDescription()
                 });
         return f;
