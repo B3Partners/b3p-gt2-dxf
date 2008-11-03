@@ -45,7 +45,7 @@ public class DXFBlocks implements DXFConstants {
             try {
                 gc = cvp.read(br);
             } catch (DXFParseException ex) {
-                throw new IOException("DXF parse error", ex);
+                throw new IOException("DXF parse error" + ex.getLocalizedMessage());
             } catch (EOFException e) {
                 doLoop = false;
                 break;

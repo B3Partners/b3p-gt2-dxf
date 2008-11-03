@@ -105,7 +105,7 @@ public class DXFDataStore extends AbstractFileDataStore {
             try {
                 featureReader = new DXFFeatureReader(theUnivers, typeName, srs);
             } catch (DXFParseException e) {
-                throw new IOException("DXF parse exception", e);
+                throw new IOException("DXF parse exception" + e.getLocalizedMessage());
             }
         }
         return featureReader;
