@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
@@ -38,10 +38,15 @@ public class DXFLwPolyline extends DXFEntity {
         super(c, l, visibility, lineType, thickness);
         _id = name;
 
-        if (v == null) {
-            v = new Vector<DXFLwVertex>();
+
+        Vector<DXFLwVertex> newV = new Vector<DXFLwVertex>();
+
+        for (int i = 0; i < v.size(); i++) {
+            DXFLwVertex entity = (DXFLwVertex) v.get(i).clone();
+            newV.add(entity);
         }
-        theVertices = v;
+
+        theVertices = newV;
         _flag = flag;
         setName("DXFLwPolyline");
     }
@@ -61,9 +66,15 @@ public class DXFLwPolyline extends DXFEntity {
         _id = orig._id;
 
         for (int i = 0; i < orig.theVertices.size(); i++) {
-            theVertices.add(new DXFLwVertex((DXFLwVertex) orig.theVertices.elementAt(i), true));
+            theVertices.add((DXFLwVertex) orig.theVertices.elementAt(i).clone());
         }
+
         _flag = orig._flag;
+
+        setType(orig.getType());
+        setStartingLineNumber(orig.getStartingLineNumber());
+        setUnivers(orig.getUnivers());
+
         setName("DXFLwPolyline");
     }
 
@@ -128,9 +139,9 @@ public class DXFLwPolyline extends DXFEntity {
         }
         DXFLwPolyline e = new DXFLwPolyline(name, flag, c, l, lv, visibility, lineType, DXFTables.defaultThickness);
         if ((flag & 1) == 1) {
-            e.setType(DXFEntity.TYPE_POLYGON);
+            e.setType(GeometryType.POLYGON);
         } else {
-            e.setType(DXFEntity.TYPE_LINE);
+            e.setType(GeometryType.LINE);
         }
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
@@ -202,19 +213,25 @@ public class DXFLwPolyline extends DXFEntity {
     @Override
     public Geometry getGeometry() {
         if (geometry == null) {
-            Coordinate[] ca = toCoordinateArray();
-            if (ca != null && ca.length > 1) {
-                if (getType() == DXFEntity.TYPE_POLYGON) {
-                    LinearRing lr = getUnivers().getGeometryFactory().createLinearRing(ca);
-                    geometry = getUnivers().getGeometryFactory().createPolygon(lr, null);
-                } else {
-                    geometry = getUnivers().getGeometryFactory().createLineString(ca);
-                }
-            } else {
-                addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
-            }
+            updateGeometry();
         }
         return super.getGeometry();
+    }
+
+    @Override
+    public void updateGeometry() {
+        Coordinate[] ca = toCoordinateArray();
+
+        if (ca != null && ca.length > 1) {
+            if (getType() == GeometryType.POLYGON) {
+                LinearRing lr = getUnivers().getGeometryFactory().createLinearRing(ca);
+                geometry = getUnivers().getGeometryFactory().createPolygon(lr, null);
+            } else {
+                geometry = getUnivers().getGeometryFactory().createLineString(ca);
+            }
+        } else {
+            addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
+        }
     }
 
     public Coordinate[] toCoordinateArray() {
@@ -222,6 +239,7 @@ public class DXFLwPolyline extends DXFEntity {
             addError("coordinate array can not be created.");
             return null;
         }
+
         Iterator it = theVertices.iterator();
         List<Coordinate> lc = new ArrayList<Coordinate>();
         Coordinate firstc = null;
@@ -230,16 +248,25 @@ public class DXFLwPolyline extends DXFEntity {
             DXFLwVertex v = (DXFLwVertex) it.next();
             lastc = v.toCoordinate();
             if (firstc == null) {
-                firstc = v.toCoordinate();
+                firstc = lastc;
             }
             lc.add(lastc);
         }
-        // geforceerd sluiten?
-        if (getType() == DXFEntity.TYPE_POLYGON) {
+
+
+        // If only 2 points found, make Line
+        if (lc.size() == 2) {
+            setType(GeometryType.LINE);
+        }
+
+
+        // Forced closing polygon
+        if (getType() == GeometryType.POLYGON) {
             if (!firstc.equals2D(lastc)) {
                 lc.add(firstc);
             }
         }
+
 
         /* TODO uitzoeken of lijn zichzelf snijdt, zo ja nodding
          * zie jts union:
@@ -248,7 +275,7 @@ public class DXFLwPolyline extends DXFEntity {
          * for (int i = 1; i < lineStrings.size(); i++) {
          * nodedLineStrings = nodedLineStrings.union((LineString)lineStrings.get(i));
          * */
-        return lc.toArray(new Coordinate[]{});
+        return rotateAndPlace(lc.toArray(new Coordinate[]{}));
     }
 
     public String toString(String name, int flag, int numVert, int c, int visibility, double thickness) {
@@ -271,8 +298,25 @@ public class DXFLwPolyline extends DXFEntity {
     }
 
     @Override
+    public String toString() {
+        return toString(getName(), _flag, theVertices.size(), getColor(), (isVisible() ? 0 : 1), getThickness());
+    }
+
+    @Override
     public DXFEntity translate(double x, double y) {
+        // Move all vertices
+        Iterator iter = theVertices.iterator();
+        while (iter.hasNext()) {
+            DXFLwVertex vertex = (DXFLwVertex) iter.next();
+            vertex._point.x += x;
+            vertex._point.y += y;
+        }
         return this;
+    }
+
+    @Override
+    public DXFEntity clone() {
+        return new DXFLwPolyline(this);
     }
 }
 

@@ -51,7 +51,6 @@ public class DXFBlocks implements DXFConstants {
                 break;
             }
 
-
             switch (gc) {
                 case TYPE:
                     String type = cvp.getStringValue();
@@ -60,7 +59,10 @@ public class DXFBlocks implements DXFConstants {
                         break;
                     } else if (type.equals(BLOCK)) {
                         DXFBlock block = DXFBlock.read(br, univers);
-                        sBlocks.add(block);
+                        // Check if block (Insert) is filtered
+                        if (!univers.isFilteredInsert(block._name)) {
+                            sBlocks.add(block);
+                        }
                     }
                     break;
                 default:

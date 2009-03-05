@@ -4,7 +4,7 @@ import java.io.EOFException;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.IOException;
 
-
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFBlock;
 import nl.b3p.geotools.data.dxf.header.DXFBlockReference;
@@ -22,6 +22,15 @@ public class DXFDimension extends DXFBlockReference {
     public double _angle = 0;//50
     public String _dimension = "<>";//1
     public DXFPoint _point_WCS = new DXFPoint();//10,20
+
+    public DXFDimension(DXFDimension newDimension) {
+        this(newDimension._angle, newDimension._dimension, newDimension._point_WCS._point.x, newDimension._point_WCS._point.y,
+                newDimension._refBlock, newDimension._blockName, newDimension.getRefLayer(), 0, newDimension.getColor(), newDimension.getLineType());
+
+        setType(newDimension.getType());
+        setStartingLineNumber(newDimension.getStartingLineNumber());
+        setUnivers(newDimension.getUnivers());
+    }
 
     public DXFDimension(double a, String dim, double x, double y, DXFBlock refBlock, String nomBlock, DXFLayer l, int visibility, int c, DXFLineType lineType) {
         super(c, l, visibility, null, nomBlock, refBlock);
@@ -95,11 +104,10 @@ public class DXFDimension extends DXFBlockReference {
                 default:
                     break;
             }
-
         }
 
         d = new DXFDimension(angle, dimension, x, y, refBlock, nomBlock, l, visibility, c, lineType);
-        d.setType(DXFEntity.TYPE_UNSUPPORTED);
+        d.setType(GeometryType.UNSUPPORTED);
         d.setStartingLineNumber(sln);
         d.setUnivers(univers);
         univers.addRefBlockForUpdate(d);
@@ -108,6 +116,11 @@ public class DXFDimension extends DXFBlockReference {
         log.debug(">>Exit at line: " + br.getLineNumber());
         return d;
     }
+
+    public void updateGeometry(){
+        // not supported
+    }
+
 
     public String toString(String dimension, double angle, String nomBlock, double x, double y, int visibility, int c) {
         StringBuffer s = new StringBuffer();
@@ -132,6 +145,13 @@ public class DXFDimension extends DXFBlockReference {
 
     @Override
     public DXFEntity translate(double x, double y) {
+        _point_WCS._point.x += x;
+        _point_WCS._point.y += y;
         return this;
+    }
+
+    @Override
+    public DXFEntity clone() {
+        return new DXFDimension(this);
     }
 }

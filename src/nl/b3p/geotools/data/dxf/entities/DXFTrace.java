@@ -3,6 +3,7 @@ package nl.b3p.geotools.data.dxf.entities;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.IOException;
 
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
@@ -12,6 +13,18 @@ import org.apache.commons.logging.LogFactory;
 public class DXFTrace extends DXFSolid {
 
     private static final Log log = LogFactory.getLog(DXFTrace.class);
+
+    public DXFTrace(DXFTrace newTrace) {
+        this(new DXFPoint(newTrace._p1._point.x, newTrace._p1._point.y, newTrace.getColor(), null, 0, newTrace.getThickness()),
+                new DXFPoint(newTrace._p2._point.x, newTrace._p2._point.y, newTrace.getColor(), null, 0, newTrace.getThickness()),
+                new DXFPoint(newTrace._p3._point.x, newTrace._p3._point.y, newTrace.getColor(), null, 0, newTrace.getThickness()),
+                new DXFPoint(newTrace._p4._point.x, newTrace._p4._point.y, newTrace.getColor(), null, 0, newTrace.getThickness()),
+                newTrace.getThickness(), newTrace.getColor(), newTrace.getRefLayer(), 0, newTrace.getLineType());
+
+        setType(newTrace.getType());
+        setStartingLineNumber(newTrace.getStartingLineNumber());
+        setUnivers(newTrace.getUnivers());
+    }
 
     public DXFTrace(DXFPoint p1, DXFPoint p2, DXFPoint p3, DXFPoint p4, double thickness, int c, DXFLayer l, int visibility, DXFLineType lineType) {
         super(p1, p2, p3, p4, thickness, c, l, visibility, lineType);
@@ -28,7 +41,7 @@ public class DXFTrace extends DXFSolid {
             visibility = 1;
         }
         DXFTrace e = new DXFTrace(s._p1, s._p2, s._p3, s._p4, s.getThickness(), s.getColor(), s.getRefLayer(), visibility, s.getLineType());
-        e.setType(DXFEntity.TYPE_UNSUPPORTED);
+        e.setType(GeometryType.UNSUPPORTED);
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
 
@@ -63,6 +76,18 @@ public class DXFTrace extends DXFSolid {
 
     @Override
     public DXFEntity translate(double x, double y) {
+        _p1._point.x += x;
+        _p1._point.y += y;
+
+        _p2._point.x += x;
+        _p2._point.y += y;
+
+        _p3._point.x += x;
+        _p3._point.y += y;
+
+        _p4._point.x += x;
+        _p4._point.y += y;
+        
         return this;
     }
 }

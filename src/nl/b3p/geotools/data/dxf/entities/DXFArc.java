@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
@@ -25,6 +26,14 @@ public class DXFArc extends DXFEntity {
     protected double _angle1 = 0;
     protected double _angle2 = 0;
 
+    public DXFArc(DXFArc newArc) {
+        this(newArc.getAngle1(), newArc.getAngle2(), newArc._point, newArc._radius, newArc.getLineType(), newArc.getColor(), newArc.getRefLayer(), 0, newArc.getThickness());
+
+        setType(newArc.getType());
+        setStartingLineNumber(newArc.getStartingLineNumber());
+        setUnivers(newArc.getUnivers());
+    }
+
     public DXFArc(double a1, double a2, DXFPoint p, double r, DXFLineType lineType, int c, DXFLayer l, int visibility, double thickness) {
         super(c, l, visibility, lineType, thickness);
         _point = p;
@@ -35,8 +44,15 @@ public class DXFArc extends DXFEntity {
         setName("DXFArc");
     }
 
-    public static DXFArc read(DXFLineNumberReader br, DXFUnivers univers) throws NumberFormatException, IOException {
+    public double getAngle1() {
+        return _angle1;
+    }
 
+    public double getAngle2() {
+        return _angle2;
+    }
+
+    public static DXFArc read(DXFLineNumberReader br, DXFUnivers univers) throws NumberFormatException, IOException {
         double x = 0, y = 0, r = 0, a1 = 0, a2 = 0, thickness = 0;
         int visibility = 0, c = 0;
         DXFLineType lineType = null;
@@ -102,7 +118,7 @@ public class DXFArc extends DXFEntity {
 
         }
         DXFArc e = new DXFArc(a1, a2, new DXFPoint(x, y, c, null, visibility, 1), r, lineType, c, l, visibility, thickness);
-        e.setType(DXFEntity.TYPE_LINE);
+        e.setType(GeometryType.LINE);
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
         log.debug(e.toString(c, r, x, y, a1, a2, visibility, thickness));
@@ -111,44 +127,54 @@ public class DXFArc extends DXFEntity {
     }
 
     public Coordinate[] toCoordinateArray() {
-        if (_point == null || _point._point == null ||
-                _radius <= 0 || _angle1 == _angle2) {
+        if (_point == null || _point._point == null || _radius <= 0 || _angle1 == _angle2) {
             addError("coordinate array can not be created.");
             return null;
         }
         List<Coordinate> lc = new ArrayList<Coordinate>();
         double startAngle = _angle1 * Math.PI / 180.0;
         double endAngle = _angle2 * Math.PI / 180.0;
-        double segAngle = 2 * Math.PI / DXFUnivers.NUM_OF_SEGMENTS;
+        double segAngle = 2 * Math.PI / _radius;
+
+        if(_radius < DXFUnivers.NUM_OF_SEGMENTS){
+            segAngle = DXFUnivers.MIN_ANGLE;
+        }
+
         double angle = startAngle;
         for (;;) {
-            double x = _point._point.getX() + _radius * Math.cos(angle);
-            double y = _point._point.getY() + _radius * Math.sin(angle);
+            double x = _point.X() + _radius * Math.cos(angle);
+            double y = _point.Y() + _radius * Math.sin(angle);
+
             Coordinate c = new Coordinate(x, y);
             lc.add(c);
 
             if (angle >= endAngle) {
                 break;
             }
+
             angle += segAngle;
             if (angle > endAngle) {
                 angle = endAngle;
             }
         }
-        return lc.toArray(new Coordinate[]{});
+        return rotateAndPlace(lc.toArray(new Coordinate[]{}));
     }
 
     @Override
     public Geometry getGeometry() {
         if (geometry == null) {
-            Coordinate[] ca = toCoordinateArray();
-            if (ca != null && ca.length > 1) {
-                geometry = getUnivers().getGeometryFactory().createLineString(ca);
-            } else {
-                addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
-            }
+            updateGeometry();
         }
         return super.getGeometry();
+    }
+
+    public void updateGeometry() {
+        Coordinate[] ca = toCoordinateArray();
+        if (ca != null && ca.length > 1) {
+            geometry = getUnivers().getGeometryFactory().createLineString(ca);
+        } else {
+            addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
+        }
     }
 
     public String toString(int c,
@@ -183,6 +209,13 @@ public class DXFArc extends DXFEntity {
 
     @Override
     public DXFEntity translate(double x, double y) {
+        _point._point.x += x;
+        _point._point.y += y;
         return this;
+    }
+
+    @Override
+    public DXFEntity clone() {
+        return new DXFArc(this);
     }
 }

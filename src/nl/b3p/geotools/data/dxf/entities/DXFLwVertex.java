@@ -40,7 +40,6 @@ public class DXFLwVertex extends DXFPoint {
         super(orig._point.x, orig._point.y, orig.getColor(), orig.getRefLayer(), 0, 1);
         _bulge = orig._bulge;
         setName("DXFLwVertex");
-
     }
 
     public double getBulge() {
@@ -83,5 +82,9 @@ public class DXFLwVertex extends DXFPoint {
         double angle = Math.atan2(y, x);
 
         return Math.tan(angle / 4d);
+    }
+
+    public DXFEntity clone(){
+        return new DXFLwVertex(this, true);
     }
 }

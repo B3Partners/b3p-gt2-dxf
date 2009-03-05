@@ -1,13 +1,16 @@
 package nl.b3p.geotools.data.dxf.parser;
 
-
 /** 
  * An enumeration that represents all valid DXF Group Codes with
  * associated value types as listed in specs.
  * 
  */
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 public enum DXFGroupCode {
 
+    UNSUPPORTED(-1, DXFValueType.STRING),
     TYPE(0, DXFValueType.STRING),
     TEXT(1, DXFValueType.STRING),
     NAME(2, DXFValueType.STRING),
@@ -66,6 +69,7 @@ public enum DXFGroupCode {
     ANGLE_8(57, DXFValueType.DOUBLE),
     ANGLE_9(58, DXFValueType.DOUBLE),
     VISIBILITY(60, DXFValueType.SHORT),
+    MAJOR_GRID_LINES(61, DXFValueType.SHORT),
     COLOR(62, DXFValueType.SHORT),
     BGCOLOR(63, DXFValueType.SHORT),
     CELLFILLCOLOR(64, DXFValueType.SHORT),
@@ -127,8 +131,17 @@ public enum DXFGroupCode {
     INT16_9(178, DXFValueType.SHORT),
     INT16_10(179, DXFValueType.SHORT),
     EXTRUSION_X(210, DXFValueType.DOUBLE),
+    LEADER_HORIZONTAL_X(211, DXFValueType.DOUBLE),
+    LEADER_OFFSET_INSERTION_POINT_X(212, DXFValueType.DOUBLE),
+    LEADER_OFFSET_ANNOTATION_POINT_X(213, DXFValueType.DOUBLE),
     EXTRUSION_Y(220, DXFValueType.DOUBLE),
+    LEADER_HORIZONTAL_Y(221, DXFValueType.DOUBLE),
+    LEADER_OFFSET_INSERTION_POINT_Y(222, DXFValueType.DOUBLE),
+    LEADER_OFFSET_ANNOTATION_POINT_Y(223, DXFValueType.DOUBLE),
     EXTRUSION_Z(230, DXFValueType.DOUBLE),
+    LEADER_HORIZONTAL_Z(231, DXFValueType.DOUBLE),
+    LEADER_OFFSET_INSERTION_POINT_Z(232, DXFValueType.DOUBLE),
+    LEADER_OFFSET_ANNOTATION_POINT_Z(233, DXFValueType.DOUBLE),
     INT16_11(270, DXFValueType.SHORT),
     INT16_12(271, DXFValueType.SHORT),
     INT16_13(272, DXFValueType.SHORT),
@@ -359,6 +372,7 @@ public enum DXFGroupCode {
     XDATA_INT32(1071, DXFValueType.INTEGER);
     private int m_code;
     private DXFValueType m_type;
+    private static final Log log = LogFactory.getLog(DXFGroupCode.class);
 
     DXFGroupCode(int code, DXFValueType type) {
         m_code = code;
@@ -379,6 +393,8 @@ public enum DXFGroupCode {
                 return agc;
             }
         }
-        throw new Error("Unknown Group Code: "+ code + ", should not happen, parse error?");
+        log.warn("Unknown Group Code: " + code + ", should not happen, parse error?");
+
+        return UNSUPPORTED;
     }
 }

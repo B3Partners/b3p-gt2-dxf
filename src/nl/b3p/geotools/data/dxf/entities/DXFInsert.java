@@ -3,7 +3,7 @@ package nl.b3p.geotools.data.dxf.entities;
 import java.io.EOFException;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.IOException;
-
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFBlock;
 import nl.b3p.geotools.data.dxf.header.DXFBlockReference;
@@ -19,10 +19,20 @@ public class DXFInsert extends DXFBlockReference {
 
     private static final Log log = LogFactory.getLog(DXFInsert.class);
     public DXFPoint _point = new DXFPoint();
+    public double _angle = 0.0;
 
-    public DXFInsert(double x, double y, String nomBlock, DXFBlock refBlock, DXFLayer l, int visibility, int c, DXFLineType lineType) {
+    public DXFInsert(DXFInsert newInsert) {
+        this(newInsert._point._point.x, newInsert._point._point.y, newInsert._blockName, newInsert._refBlock, newInsert.getRefLayer(), 0, newInsert.getColor(), newInsert.getLineType(), newInsert._angle);
+
+        setType(newInsert.getType());
+        setStartingLineNumber(newInsert.getStartingLineNumber());
+        setUnivers(newInsert.getUnivers());
+    }
+
+    public DXFInsert(double x, double y, String nomBlock, DXFBlock refBlock, DXFLayer l, int visibility, int c, DXFLineType lineType, double angle) {
         super(c, l, visibility, lineType, nomBlock, refBlock);
         _point = new DXFPoint(x, y, c, null, visibility, 1);
+        _angle = angle;
         setName("DXFInsert");
     }
 
@@ -34,6 +44,7 @@ public class DXFInsert extends DXFBlockReference {
         int visibility = 0, c = -1;
         DXFBlock refBlock = null;
         DXFLineType lineType = null;
+        double angle = 0.0;
 
         int sln = br.getLineNumber();
         log.debug(">>Enter at line: " + sln);
@@ -56,7 +67,7 @@ public class DXFInsert extends DXFBlockReference {
             switch (gc) {
                 case TYPE:
                     String type = cvp.getStringValue();
-                    // geldt voor alle waarden van type
+
                     br.reset();
                     doLoop = false;
                     break;
@@ -72,6 +83,9 @@ public class DXFInsert extends DXFBlockReference {
                 case Y_1: //"20"
                     y = cvp.getDoubleValue();
                     break;
+                case ANGLE_1: //"20"
+                    angle = cvp.getDoubleValue();
+                    break;
                 case COLOR: //"62"
                     c = cvp.getShortValue();
                     break;
@@ -86,13 +100,16 @@ public class DXFInsert extends DXFBlockReference {
             }
         }
 
-        m = new DXFInsert(x, y, nomBlock, refBlock, l, visibility, c, lineType);
-        m.setType(DXFEntity.TYPE_POINT);
+        m = new DXFInsert(x, y, nomBlock, refBlock, l, visibility, c, lineType, angle);
+        m.setType(GeometryType.POINT);
         m.setStartingLineNumber(sln);
         m.setUnivers(univers);
+
         univers.addRefBlockForUpdate(m);
+
         log.debug(m.toString(x, y, visibility, c, lineType));
         log.debug(">>Exit at line: " + br.getLineNumber());
+
         return m;
     }
 
@@ -114,10 +131,17 @@ public class DXFInsert extends DXFBlockReference {
         s.append("]");
         return s.toString();
     }
-    
+
     @Override
     public DXFEntity translate(double x, double y) {
+        _point._point.x += x;
+        _point._point.y += y;
+
         return this;
     }
-    
+
+    @Override
+    public DXFEntity clone() {
+        return new DXFInsert(this);
+    }
 }

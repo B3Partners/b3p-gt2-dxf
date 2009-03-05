@@ -10,6 +10,7 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
@@ -28,6 +29,16 @@ public class DXFEllipse extends DXFEntity {
     public double _ratio = 0;
     public double _start = 0;
     public double _end = 0;
+
+    public DXFEllipse(DXFEllipse newEllipse) {
+        this(new DXFPoint(newEllipse._centre._point.x, newEllipse._centre._point.y, newEllipse.getColor(), null, 0, (double) newEllipse.getThickness()),
+                new DXFPoint(newEllipse._point._point.x, newEllipse._point._point.y, newEllipse.getColor(), null, 0, (double) newEllipse.getThickness()),
+                newEllipse._ratio, newEllipse._start, newEllipse._end, newEllipse.getColor(), newEllipse.getRefLayer(), 0, newEllipse.getLineType());
+
+        setType(newEllipse.getType());
+        setStartingLineNumber(newEllipse.getStartingLineNumber());
+        setUnivers(newEllipse.getUnivers());
+    }
 
     public DXFEllipse(DXFPoint centre, DXFPoint p, double r, double s, double e, int c, DXFLayer l, int visibility, DXFLineType typeLine) {
         super(c, l, visibility, typeLine, DXFTables.defaultThickness);
@@ -113,7 +124,7 @@ public class DXFEllipse extends DXFEntity {
                 new DXFPoint(x, y, c, l, visibility, 1),
                 new DXFPoint(x1, y1, c, l, visibility, 1),
                 r, s, e, c, l, visibility, lineType);
-        m.setType(DXFEntity.TYPE_POLYGON);
+        m.setType(GeometryType.POLYGON);
         m.setStartingLineNumber(sln);
         m.setUnivers(univers);
         log.debug(m.toString(visibility, c, r, s, e, x, y, x1, y1));
@@ -166,7 +177,7 @@ public class DXFEllipse extends DXFEntity {
         List<Coordinate> lc = new ArrayList<Coordinate>();
         double startAngle = 0.0;
         double endAngle = 2 * Math.PI;
-        double segAngle = 2 * Math.PI / DXFUnivers.NUM_OF_SEGMENTS;
+        double segAngle = 2 * Math.PI / _ratio;
         double angle = startAngle;
         for (;;) {
             //TODO
@@ -183,21 +194,25 @@ public class DXFEllipse extends DXFEntity {
                 angle = endAngle;
             }
         }
-        return lc.toArray(new Coordinate[]{});
+        return rotateAndPlace(lc.toArray(new Coordinate[]{}));
     }
 
     @Override
     public Geometry getGeometry() {
         if (geometry == null) {
-            Coordinate[] ca = toCoordinateArray();
-            if (ca != null && ca.length > 1) {
-                LinearRing lr = getUnivers().getGeometryFactory().createLinearRing(ca);
-                geometry = getUnivers().getGeometryFactory().createPolygon(lr, null);
-            } else {
-                addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
-            }
+            updateGeometry();
         }
         return super.getGeometry();
+    }
+
+    public void updateGeometry() {
+        Coordinate[] ca = toCoordinateArray();
+        if (ca != null && ca.length > 1) {
+            LinearRing lr = getUnivers().getGeometryFactory().createLinearRing(ca);
+            geometry = getUnivers().getGeometryFactory().createPolygon(lr, null);
+        } else {
+            addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
+        }
     }
 
     public String toString(int visibility, int c, double r, double t, double e, double x, double y, double x1, double y1) {
@@ -227,6 +242,17 @@ public class DXFEllipse extends DXFEntity {
 
     @Override
     public DXFEntity translate(double x, double y) {
+        _point._point.x += x;
+        _point._point.y += y;
+
+        // Is Translation of centre necessary?
+        _centre._point.x += x;
+        _centre._point.y += y;
         return this;
+    }
+
+    @Override
+    public DXFEntity clone() {
+        return new DXFEllipse(this);
     }
 }

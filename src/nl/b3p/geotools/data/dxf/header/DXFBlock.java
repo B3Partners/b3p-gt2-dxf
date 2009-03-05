@@ -3,6 +3,7 @@ package nl.b3p.geotools.data.dxf.header;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Vector;
+import java.util.Iterator;
 
 
 import nl.b3p.geotools.data.dxf.parser.DXFColor;
@@ -11,6 +12,7 @@ import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
 import nl.b3p.geotools.data.dxf.entities.DXFPoint;
+import nl.b3p.geotools.data.dxf.entities.DXFInsert;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFConstants;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
@@ -24,6 +26,16 @@ public class DXFBlock extends DXFEntity implements DXFConstants {
     public DXFPoint _point = new DXFPoint();
     public String _name;
     public int _flag;
+
+    public DXFBlock(DXFBlock newBlock) {
+        this(newBlock._point.X(), newBlock._point.Y(), newBlock._flag, newBlock._name, null, newBlock.getColor(), newBlock.getRefLayer());
+
+        // Copy entities
+        Iterator iter = newBlock.theEntities.iterator();
+        while (iter.hasNext()) {
+            theEntities.add(((DXFEntity) iter).clone());
+        }
+    }
 
     public DXFBlock(double x, double y, int flag, String name, Vector<DXFEntity> ent, int c, DXFLayer l) {
         super(c, l, 0, null, DXFTables.defaultThickness);
@@ -65,12 +77,17 @@ public class DXFBlock extends DXFEntity implements DXFConstants {
             switch (gc) {
                 case TYPE:
                     String type = cvp.getStringValue();
-                    if (ENDBLK.equals(type)) {
+                    if (type.equals(ENDBLK)) {
                         doLoop = false;
-                    } else if (ENDSEC.equals(type)) {
+                    } else if (type.equals(ENDSEC)) {
                         // hack voor als ENDBLK ontbreekt
                         doLoop = false;
                         br.reset();
+                    } else if (type.equals(BLOCK)) {
+                        doLoop = false;
+                        br.reset();
+                    } else if (type.equals(INSERT)) {
+                        DXFInsert.read(br, univers);
                     } else {
                         // check of dit entities zijn
                         br.reset();
@@ -93,14 +110,13 @@ public class DXFBlock extends DXFEntity implements DXFConstants {
                     y = cvp.getDoubleValue();
                     break;
                 default:
-                    //                myLog.writeLog("Unknown :" + ligne_temp + " (" + ligne + ")");
                     break;
             }
-
         }
+        
         DXFBlock e = new DXFBlock(x, y, flag, name, sEnt, DXFColor.getDefaultColorIndex(), l);
         log.debug(e.toString(x, y, flag, name, sEnt.size(), DXFColor.getDefaultColorIndex()));
-        log.debug(">Exit at line: " + br.getLineNumber());
+        log.debug("Exit at line: " + br.getLineNumber());
         return e;
     }
 
@@ -125,6 +141,16 @@ public class DXFBlock extends DXFEntity implements DXFConstants {
 
     @Override
     public DXFEntity translate(double x, double y) {
+        // Move all vertices
+        Iterator iter = theEntities.iterator();
+        while (iter.hasNext()) {
+            DXFEntity entity = (DXFEntity) iter.next();
+            entity.translate(x, y);
+        }
         return this;
+    }
+
+    public DXFEntity clone() {
+        return new DXFBlock(this);
     }
 }

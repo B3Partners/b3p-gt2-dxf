@@ -35,7 +35,7 @@ public class DXFLayer extends DXFEntity implements DXFConstants {
 
     @Override
     public void setVisible(boolean bool) {
-        setVisible(bool);
+        super.setVisible(bool); // FIXED; added 'super.'
         for (int i = 0; i < theEnt.size(); i++) {
             ((DXFEntity) theEnt.get(i)).setVisible(bool);
         }
@@ -105,6 +105,10 @@ public class DXFLayer extends DXFEntity implements DXFConstants {
     
     @Override
     public DXFEntity translate(double x, double y) {
+        return this;
+    }
+
+    public DXFEntity clone(){
         return this;
     }
 }

@@ -15,6 +15,7 @@ import nl.b3p.geotools.data.dxf.entities.DXFLwPolyline;
 import nl.b3p.geotools.data.dxf.entities.DXFPoint;
 import nl.b3p.geotools.data.dxf.entities.DXFPolyline;
 import nl.b3p.geotools.data.dxf.entities.DXFSolid;
+import nl.b3p.geotools.data.dxf.entities.DXFSpLine;
 import nl.b3p.geotools.data.dxf.entities.DXFText;
 import nl.b3p.geotools.data.dxf.entities.DXFTrace;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
@@ -27,8 +28,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public class DXFEntities implements DXFConstants {
-    private static final Log log = LogFactory.getLog(DXFEntities.class);
 
+    private static final Log log = LogFactory.getLog(DXFEntities.class);
     public Vector<DXFEntity> theEntities = new Vector<DXFEntity>();
 
     public DXFEntities() {
@@ -65,8 +66,7 @@ public class DXFEntities implements DXFConstants {
                 case TYPE:
                     DXFEntity dxfe = null;
                     String type = cvp.getStringValue();
-                    if (type.equals(ENDSEC) ||
-                            type.equals(ENDBLK)) {
+                    if (type.equals(ENDSEC) || type.equals(ENDBLK)) {
                         doLoop = false;
                         break;
                     } else if (type.equals(LINE)) {
@@ -76,9 +76,9 @@ public class DXFEntities implements DXFConstants {
                     } else if (type.equals(CIRCLE)) {
                         dxfe = DXFCircle.read(br, univers);
                     } else if (type.equals(POLYLINE)) {
-                        dxfe = DXFPolyline.read(br, univers);
+                             dxfe = DXFPolyline.read(br, univers);
                     } else if (type.equals(LWPOLYLINE)) {
-                        dxfe = DXFLwPolyline.read(br, univers);
+                               dxfe = DXFLwPolyline.read(br, univers);
                     } else if (type.equals(POINT)) {
                         dxfe = DXFPoint.read(br, univers);
                     } else if (type.equals(SOLID)) {
@@ -95,6 +95,8 @@ public class DXFEntities implements DXFConstants {
                         dxfe = DXFTrace.read(br, univers);
                     } else if (type.equals(ELLIPSE)) {
                         dxfe = DXFEllipse.read(br, univers);
+                    } else if (type.equals(SPLINE)) {
+                        dxfe = DXFSpLine.read(br, univers);
                     }
                     if (dxfe != null) {
                         sEnt.add(dxfe);
@@ -110,7 +112,7 @@ public class DXFEntities implements DXFConstants {
         log.debug(">Exit at line: " + br.getLineNumber());
         return e;
     }
-    
+
     public String toString(int numEntities) {
         StringBuffer s = new StringBuffer();
         s.append("DXFEntities [");
@@ -119,5 +121,4 @@ public class DXFEntities implements DXFConstants {
         s.append("]");
         return s.toString();
     }
-    
 }

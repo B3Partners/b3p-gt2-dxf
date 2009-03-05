@@ -10,6 +10,7 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
@@ -24,6 +25,15 @@ public class DXFCircle extends DXFEntity {
     private static final Log log = LogFactory.getLog(DXFCircle.class);
     public DXFPoint _point = new DXFPoint();
     public double _radius = 0;
+
+    public DXFCircle(DXFCircle newCircle) {
+        this(new DXFPoint(newCircle._point._point.x, newCircle._point._point.y, newCircle.getColor(), newCircle.getRefLayer(), 0, newCircle.getThickness()),
+                newCircle._radius, newCircle.getLineType(), newCircle.getColor(), newCircle.getRefLayer(), 0, newCircle.getThickness());
+
+        setType(newCircle.getType());
+        setStartingLineNumber(newCircle.getStartingLineNumber());
+        setUnivers(newCircle.getUnivers());
+    }
 
     public DXFCircle(DXFPoint p, double r, DXFLineType lineType, int c, DXFLayer l, int visibility, double thickness) {
         super(c, l, visibility, lineType, thickness);
@@ -93,7 +103,7 @@ public class DXFCircle extends DXFEntity {
 
         }
         DXFCircle e = new DXFCircle(new DXFPoint(x, y, c, l, visibility, 1), r, lineType, c, l, visibility, thickness);
-        e.setType(DXFEntity.TYPE_POLYGON);
+        e.setType(GeometryType.POLYGON);
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
         log.debug(e.toString(x, y, c, visibility, thickness));
@@ -109,7 +119,12 @@ public class DXFCircle extends DXFEntity {
         List<Coordinate> lc = new ArrayList<Coordinate>();
         double startAngle = 0.0;
         double endAngle = 2 * Math.PI;
-        double segAngle = 2 * Math.PI / DXFUnivers.NUM_OF_SEGMENTS;
+        double segAngle = 2 * Math.PI / _radius;
+
+        if(_radius < DXFUnivers.NUM_OF_SEGMENTS){
+            segAngle = DXFUnivers.MIN_ANGLE;
+        }
+
         double angle = startAngle;
         for (;;) {
             double x = _point._point.getX() + _radius * Math.cos(angle);
@@ -120,26 +135,41 @@ public class DXFCircle extends DXFEntity {
             if (angle >= endAngle) {
                 break;
             }
+
             angle += segAngle;
             if (angle > endAngle) {
                 angle = endAngle;
             }
         }
-        return lc.toArray(new Coordinate[]{});
+
+        // Fix to avoid error while creating LinearRing
+        // If first coord is not equal to last coord
+        if (!lc.get(0).equals(lc.get(lc.size() - 1))) {
+            // Set last coordinate == first
+            lc.set(lc.size() - 1, lc.get(0));
+        }
+
+
+        return rotateAndPlace(lc.toArray(new Coordinate[]{}));
     }
 
     @Override
     public Geometry getGeometry() {
         if (geometry == null) {
-            Coordinate[] ca = toCoordinateArray();
-            if (ca != null && ca.length > 1) {
-                LinearRing lr = getUnivers().getGeometryFactory().createLinearRing(ca);
-                geometry = getUnivers().getGeometryFactory().createPolygon(lr, null);
-            } else {
-                addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
-            }
+            updateGeometry();
         }
         return super.getGeometry();
+    }
+
+    @Override
+    public void updateGeometry() {
+        Coordinate[] ca = toCoordinateArray();
+        if (ca != null && ca.length > 1) {
+            LinearRing lr = getUnivers().getGeometryFactory().createLinearRing(ca);
+            geometry = getUnivers().getGeometryFactory().createPolygon(lr, null);
+        } else {
+            addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
+        }
     }
 
     public String toString(double x, double y, int c, int visibility, double thickness) {
@@ -161,6 +191,13 @@ public class DXFCircle extends DXFEntity {
 
     @Override
     public DXFEntity translate(double x, double y) {
+        _point._point.x += x;
+        _point._point.y += y;
         return this;
+    }
+
+    @Override
+    public DXFEntity clone() {
+        return new DXFCircle(this);
     }
 }

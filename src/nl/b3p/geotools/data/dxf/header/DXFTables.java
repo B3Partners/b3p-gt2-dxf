@@ -10,6 +10,8 @@ import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
 import nl.b3p.geotools.data.dxf.parser.DXFConstants;
 import nl.b3p.geotools.data.dxf.parser.DXFGroupCode;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
+import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
+import nl.b3p.geotools.data.dxf.header.DXFBlockRecord;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -28,7 +30,7 @@ public class DXFTables implements DXFConstants {
         this.theLineTypes = sLineTypes;
     }
 
-    public static DXFTables readTables(DXFLineNumberReader br) throws IOException {
+    public static DXFTables readTables(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
         Vector<DXFLayer> sLayers = new Vector<DXFLayer>();
         Vector<DXFLineType> sLineTypes = new Vector<DXFLineType>();
 
@@ -56,7 +58,7 @@ public class DXFTables implements DXFConstants {
                         doLoop = false;
                         break;
                     } else if (type.equals(TABLE)) {
-                        readTable(br, sLayers, sLineTypes);
+                        readTable(br, sLayers, sLineTypes, univers);
                     }
                     break;
                 default:
@@ -69,7 +71,7 @@ public class DXFTables implements DXFConstants {
         return e;
     }
 
-    public static void readTable(DXFLineNumberReader br, Vector<DXFLayer> sLayers, Vector<DXFLineType> sLineTypes) throws IOException {
+    public static void readTable(DXFLineNumberReader br, Vector<DXFLayer> sLayers, Vector<DXFLineType> sLineTypes, DXFUnivers univers) throws IOException {
 
         int sln = br.getLineNumber();
         log.debug(">>Enter at line: " + sln);
@@ -91,6 +93,7 @@ public class DXFTables implements DXFConstants {
             switch (gc) {
                 case TYPE:
                     String type = cvp.getStringValue();
+
                     if (type.equals(ENDSEC)) {
                         // hack om einde zonder ENDTAB te werken
                         br.reset();
@@ -105,6 +108,9 @@ public class DXFTables implements DXFConstants {
                     } else if (type.equals(LTYPE)) {
                         DXFLineType lt = DXFLineType.read(br);
                         sLineTypes.add(lt);
+                    } else if (type.equals(BLOCK_RECORD)) {
+                        log.info("Blockrecord at " + br.getLineNumber());
+                        // DXFBlockRecord dt = DXFBlockRecord.read(br, univers);
                     }
                     break;
                 default:

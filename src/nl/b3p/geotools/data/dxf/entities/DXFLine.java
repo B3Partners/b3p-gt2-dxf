@@ -6,7 +6,7 @@ import java.io.EOFException;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.IOException;
 
-
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
@@ -22,6 +22,16 @@ public class DXFLine extends DXFEntity {
     public DXFPoint _a = new DXFPoint();
     public DXFPoint _b = new DXFPoint();
 
+    public DXFLine(DXFLine newLine) {
+        this(new DXFPoint(newLine._a._point.x, newLine._a._point.y, newLine.getColor(), null, 0, newLine.getThickness()),
+                new DXFPoint(newLine._b._point.x, newLine._b._point.y, newLine.getColor(), null, 0, newLine.getThickness()),
+                newLine.getColor(), newLine.getRefLayer(), newLine.getLineType(), newLine.getThickness(), 0);
+
+        setType(newLine.getType());
+        setStartingLineNumber(newLine.getStartingLineNumber());
+        setUnivers(newLine.getUnivers());
+    }
+
     public DXFLine(DXFPoint a, DXFPoint b, int c, DXFLayer l, DXFLineType lineType, double thickness, int visibility) {
         super(c, l, visibility, lineType, thickness);
         _a = a;
@@ -33,7 +43,7 @@ public class DXFLine extends DXFEntity {
         DXFLayer l = null;
         double x1 = 0, y1 = 0, x2 = 0, y2 = 0, thickness = 0;
         DXFLineType lineType = null;
-        int visibility = 0, c = -1;
+        int visibility = 1, c = -1;
 
         int sln = br.getLineNumber();
         log.debug(">>Enter at line: " + sln);
@@ -99,7 +109,7 @@ public class DXFLine extends DXFEntity {
                 lineType,
                 thickness,
                 visibility);
-        e.setType(DXFEntity.TYPE_LINE);
+        e.setType(GeometryType.LINE);
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
         log.debug(e.toString(x1, y1, x2, y2, c, visibility, thickness));
@@ -112,20 +122,26 @@ public class DXFLine extends DXFEntity {
             addError("coordinate array can not be created.");
             return null;
         }
-        return new Coordinate[]{_a.toCoordinate(), _b.toCoordinate()};
+
+        return rotateAndPlace(new Coordinate[]{_a.toCoordinate(), _b.toCoordinate()});
     }
 
     @Override
     public Geometry getGeometry() {
         if (geometry == null) {
-            Coordinate[] ca = toCoordinateArray();
-            if (ca != null && ca.length > 1) {
-                geometry = getUnivers().getGeometryFactory().createLineString(ca);
-            } else {
-                addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
-            }
+            updateGeometry();
         }
         return super.getGeometry();
+    }
+
+    @Override
+    public void updateGeometry() {
+        Coordinate[] ca = toCoordinateArray();
+        if (ca != null && ca.length > 1) {
+            geometry = getUnivers().getGeometryFactory().createLineString(ca);
+        } else {
+            addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
+        }
     }
 
     public String toString(double x1, double y1, double x2, double y2, int c, int visibility, double thickness) {
@@ -151,6 +167,16 @@ public class DXFLine extends DXFEntity {
 
     @Override
     public DXFEntity translate(double x, double y) {
+        _a._point.x += x;
+        _a._point.y += y;
+
+        _b._point.x += x;
+        _b._point.y += y;
         return this;
+    }
+
+    @Override
+    public DXFEntity clone() {
+        return new DXFLine(this);
     }
 }

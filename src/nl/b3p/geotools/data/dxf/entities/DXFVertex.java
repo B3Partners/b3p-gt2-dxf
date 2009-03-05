@@ -4,7 +4,7 @@ import java.io.EOFException;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.IOException;
 
-
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.parser.DXFCodeValuePair;
@@ -17,6 +17,14 @@ public class DXFVertex extends DXFPoint {
 
     private static final Log log = LogFactory.getLog(DXFVertex.class);
     protected double _bulge = 0;
+
+    public DXFVertex(DXFVertex newVertex) {
+        this(newVertex._point.x, newVertex._point.y, newVertex._bulge, newVertex.getColor(), newVertex.getRefLayer(), 0);
+
+        setType(newVertex.getType());
+        setStartingLineNumber(newVertex.getStartingLineNumber());
+        setUnivers(newVertex.getUnivers());
+    }
 
     public DXFVertex(double x, double y, double b, int c, DXFLayer l, int visibility) {
         super(x, y, c, l, visibility, 1);
@@ -79,7 +87,7 @@ public class DXFVertex extends DXFPoint {
         }
 
         DXFVertex e = new DXFVertex(x, y, b, c, l, visibility);
-        e.setType(DXFEntity.TYPE_POINT);
+        e.setType(GeometryType.POINT);
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
         log.debug(e.toString(b, x, y, c, visibility));

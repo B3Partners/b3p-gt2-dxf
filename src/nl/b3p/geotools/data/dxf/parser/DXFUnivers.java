@@ -4,12 +4,19 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.PrecisionModel;
+
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Vector;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Collections;
 
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
+import nl.b3p.geotools.data.dxf.entities.DXFInsert;
+import nl.b3p.geotools.data.dxf.entities.DXFPoint;
 import nl.b3p.geotools.data.dxf.header.DXFBlock;
 import nl.b3p.geotools.data.dxf.header.DXFBlockReference;
 import nl.b3p.geotools.data.dxf.header.DXFBlocks;
@@ -25,7 +32,8 @@ public class DXFUnivers implements DXFConstants {
 
     private static final Log log = LogFactory.getLog(DXFUnivers.class);
     public static final PrecisionModel precisionModel = new PrecisionModel(PrecisionModel.FLOATING);
-    public static final int NUM_OF_SEGMENTS = 36;
+    public static final int NUM_OF_SEGMENTS = 16; // Minimum number of segments for a circle (also used for arc)
+    public static final double MIN_ANGLE = 2 * Math.PI / NUM_OF_SEGMENTS; // Minimum number of segments for a circle (also used for arc)
     private Vector<DXFBlockReference> _entForUpdate = new Vector<DXFBlockReference>();
     public Vector<DXFTables> theTables = new Vector<DXFTables>();
     public Vector<DXFBlock> theBlocks = new Vector<DXFBlock>();
@@ -33,8 +41,16 @@ public class DXFUnivers implements DXFConstants {
     private DXFHeader _header;
     private GeometryFactory geometryFactory = null;
     private Geometry errorGeometry = null;
+    private HashMap insertsFound = new HashMap();
+    private ArrayList dxfInsertsFilter;
+    private String info = ""; // Used for getInfo();  returns this string with information about the file
 
-    public DXFUnivers() {
+    public DXFUnivers(ArrayList dxfInsertsFilter) {
+        this.dxfInsertsFilter = dxfInsertsFilter;
+    }
+
+    public boolean isFilteredInsert(String blockName) {
+        return dxfInsertsFilter.contains(blockName);
     }
 
     public void read(DXFLineNumberReader br) throws IOException {
@@ -64,9 +80,7 @@ public class DXFUnivers implements DXFConstants {
                     break;
             }
         }
-
         updateRefBlock();
-
     }
 
     public void readSection(DXFLineNumberReader br) throws IOException {
@@ -103,7 +117,7 @@ public class DXFUnivers implements DXFConstants {
                         /* construct geometry factory */
                         geometryFactory = new GeometryFactory(precisionModel, _header._SRID);
                     } else if (name.equals(TABLES)) {
-                        DXFTables at = DXFTables.readTables(br);
+                        DXFTables at = DXFTables.readTables(br, this);
                         theTables.add(at);
                     } else if (name.equals(BLOCKS)) {
                         DXFBlocks ab = DXFBlocks.readBlocks(br, this);
@@ -112,9 +126,9 @@ public class DXFUnivers implements DXFConstants {
                         DXFEntities dxfes = DXFEntities.readEntities(br, this);
                         theEntities.addAll(dxfes.theEntities);
                     // toevoegen aan layer doen we even niet, waarschijnlijk niet nodig
-//                        if (o != null && o._refLayer != null) {
-//                            o._refLayer.theEnt.add(o);
-//                        }
+                    //if (o != null && o._refLayer != null) {
+                    //    o._refLayer.theEnt.add(o);
+                    //}
                     }
                     break;
                 default:
@@ -122,16 +136,13 @@ public class DXFUnivers implements DXFConstants {
             }
 
         }
-
-        updateRefBlock();
-
     }
 
     public DXFBlock findBlock(String nom) {
         DXFBlock b = null;
-        for (int i = 0; i <
-                theBlocks.size(); i++) {
+        for (int i = 0; i < theBlocks.size(); i++) {
             if (theBlocks.elementAt(i)._name.equals(nom)) {
+                insertsFound.put(nom, true);
                 return theBlocks.elementAt(i);
             }
         }
@@ -140,15 +151,12 @@ public class DXFUnivers implements DXFConstants {
 
     public DXFLayer findLayer(String nom) {
         DXFLayer l = null;
-        for (int i = 0; i <
-                theTables.size(); i++) {
-            for (int j = 0; j <
-                    theTables.elementAt(i).theLayers.size(); j++) {
+        for (int i = 0; i < theTables.size(); i++) {
+            for (int j = 0; j < theTables.elementAt(i).theLayers.size(); j++) {
                 if (theTables.elementAt(i).theLayers.elementAt(j).getName().equals(nom)) {
                     l = theTables.elementAt(i).theLayers.elementAt(j);
                     return l;
                 }
-
             }
         }
 
@@ -159,20 +167,15 @@ public class DXFUnivers implements DXFConstants {
         }
 
         theTables.elementAt(0).theLayers.add(l);
-
         return l;
     }
 
-    public DXFLineType findLType(
-            String name) {
-        for (int i = 0; i <
-                theTables.size(); i++) {
-            for (int j = 0; j <
-                    theTables.elementAt(i).theLineTypes.size(); j++) {
+    public DXFLineType findLType(String name) {
+        for (int i = 0; i < theTables.size(); i++) {
+            for (int j = 0; j < theTables.elementAt(i).theLineTypes.size(); j++) {
                 if (theTables.elementAt(i).theLineTypes.elementAt(j)._name.equals(name)) {
                     return theTables.elementAt(i).theLineTypes.elementAt(j);
                 }
-
             }
         }
         return null;
@@ -182,33 +185,107 @@ public class DXFUnivers implements DXFConstants {
         _entForUpdate.add(obj);
     }
 
+    // Use only once!
     public void updateRefBlock() {
         DXFBlockReference bro = null;
+        int numInserts = 0;
+
         for (int i = 0; i < _entForUpdate.size(); i++) {
             bro = _entForUpdate.get(i);
+            boolean isInsert = false;
+
+            // TODO GJ Delete instanceof counter
+            if (bro instanceof DXFInsert) {
+                numInserts++;
+                isInsert = true;
+            }
+
+            if (!insertsFound.containsKey(bro._blockName)) {
+                insertsFound.put(bro._blockName, false);
+            }
+
             DXFBlock b = findBlock(bro._blockName);
-            if (b != null && bro.getType() != DXFEntity.TYPE_UNSUPPORTED) {
+
+            if (b != null && bro.getType() != GeometryType.UNSUPPORTED) {
                 double x = b._point.X();
                 double y = b._point.Y();
+
+                if (isInsert) {
+                    DXFPoint entPoint = ((DXFInsert) bro)._point;
+                    x = entPoint._point.getX();
+                    y = entPoint._point.getY();
+                }
+
                 Vector<DXFEntity> refBlockEntities = b.theEntities;
                 if (refBlockEntities != null) {
                     Iterator it = refBlockEntities.iterator();
                     while (it.hasNext()) {
-                        DXFEntity e = (DXFEntity)it.next();
-                        theEntities.add(e.translate(x,y));
-                        //TODO refblock/Insert in block mag ook!
+                        // Create clone if blockEntity is a insert
+                        DXFEntity e = ((isInsert) ? ((DXFEntity) it.next()).clone() : (DXFEntity) it.next());
+
+                        if (isInsert) {
+                            e.setBase(((DXFInsert) bro)._point.toCoordinate());
+                            e.setAngle(((DXFInsert) bro)._angle);
+                        }
+
+                        e.updateGeometry();
+                        theEntities.add(e);
                     }
                 }
             } else {
-                log.error("can not update refblock: " + bro.getName() + " at " + bro.getStartingLineNumber());
+                log.error("Can not update refblock: " + bro.getName() + " - " + bro._blockName + " at " + bro.getStartingLineNumber());
             }
-            // Refblock/Insert zelf verwijderen
-            theEntities.remove(bro);
+
+            if (!isInsert) {
+                theEntities.remove(bro);
+            }
         }
+
+        // Set information
+        if (_entForUpdate.size() > 0) {
+            info += "Num of Blocks: " + _entForUpdate.size() + " of which Inserts: " + numInserts + "\n";
+            java.util.HashMap list = new java.util.HashMap();
+
+            // Count inserts in updateList
+            for (int i = 0; i < _entForUpdate.size(); i++) {
+                if (_entForUpdate.get(i) instanceof DXFInsert) {
+                    DXFInsert fg = (DXFInsert) _entForUpdate.get(i);
+                    String name = fg._blockName;
+
+                    if (!list.containsKey(name)) {
+                        list.put(name, 1);
+                    } else {
+                        list.put(name, ((Integer) list.get(name)) + 1);
+                    }
+                }
+            }
+
+            ArrayList arrayList = new ArrayList(list.keySet());
+            Collections.sort(arrayList);
+
+            for (java.util.Iterator iter = arrayList.iterator(); iter.hasNext();) {
+                String key = (String) iter.next();
+                String value = Integer.toString((Integer) list.get(key));
+                String found = ((Boolean) insertsFound.get(key) ? "" : (isFilteredInsert(key) ? "Filtered" : "Missing"));
+
+                key = makeTabs(key, 31);
+                value = makeTabs(value, 12);
+
+                info += key + value + found + "\n";
+            }
+        }
+
         _entForUpdate.removeAllElements();
     }
 
+    public String getInfo() {
+        return info;
+    }
+
     public GeometryFactory getGeometryFactory() {
+        if (geometryFactory == null) {
+            geometryFactory = new GeometryFactory(precisionModel);
+        }
         return geometryFactory;
     }
 
@@ -225,5 +302,12 @@ public class DXFUnivers implements DXFConstants {
 
     public void setErrorGeometry(Geometry errorGeometry) {
         this.errorGeometry = errorGeometry;
+    }
+
+    public static String makeTabs(String text, int length) {
+        for (int i = text.length() - 1; i < length; i++) {
+            text += " ";
+        }
+        return text;
     }
 }

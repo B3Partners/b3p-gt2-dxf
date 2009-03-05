@@ -7,7 +7,7 @@ import java.awt.geom.Point2D;
 import java.io.EOFException;
 import java.io.IOException;
 
-
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFTables;
@@ -21,6 +21,14 @@ public class DXFPoint extends DXFEntity {
 
     private static final Log log = LogFactory.getLog(DXFPoint.class);
     public Point2D.Double _point = new Point2D.Double(0, 0);
+
+    public DXFPoint(DXFPoint newPoint) {
+        this(newPoint._point.x, newPoint._point.y, newPoint.getColor(), newPoint.getRefLayer(), 0, newPoint.getThickness());
+
+        setType(newPoint.getType());
+        setStartingLineNumber(newPoint.getStartingLineNumber());
+        setUnivers(newPoint.getUnivers());
+    }
 
     public DXFPoint(Point2D.Double p, int c, DXFLayer l, int visibility, float thickness) {
         super(c, l, visibility, null, thickness);
@@ -118,10 +126,10 @@ public class DXFPoint extends DXFEntity {
                 default:
                     break;
             }
-
         }
+
         DXFPoint e = new DXFPoint(x, y, c, l, visibility, thickness);
-        e.setType(DXFEntity.TYPE_POINT);
+        e.setType(GeometryType.POINT);
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
         log.debug(e.toString(x, y, visibility, c, thickness));
@@ -132,17 +140,24 @@ public class DXFPoint extends DXFEntity {
     @Override
     public Geometry getGeometry() {
         if (geometry == null) {
-            geometry = getUnivers().getGeometryFactory().createPoint(toCoordinate());
+           updateGeometry();
         }
         return super.getGeometry();
     }
+
+    @Override
+    public void updateGeometry(){
+         geometry = getUnivers().getGeometryFactory().createPoint(toCoordinate());
+    }
+
 
     public Coordinate toCoordinate() {
         if (_point == null) {
             addError("coordinate can not be created.");
             return null;
         }
-        return new Coordinate(_point.getX(), _point.getY());
+
+        return rotateAndPlace(new Coordinate(_point.getX(), _point.getY()));
     }
 
     public String toString(double x, double y, int visibility, int c, double thickness) {
@@ -164,7 +179,14 @@ public class DXFPoint extends DXFEntity {
 
     @Override
     public DXFEntity translate(double x, double y) {
-//        return new DXFPoint(_point.getX() - x, _point.getY() + y, _color, _refLayer, (visible ? 1 : 0), _thickness);
+        _point.x += x;
+        _point.y += y;
+
         return this;
+    }
+
+    @Override
+    public DXFEntity clone() {
+        return new DXFPoint(this);
     }
 }

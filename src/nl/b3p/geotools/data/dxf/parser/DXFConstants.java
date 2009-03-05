@@ -11,6 +11,7 @@ public interface DXFConstants {
     public static final String TABLES = "TABLES";
     public static final String TABLE = "TABLE";
     public static final String LAYER = "LAYER";
+    public static final String BLOCK_RECORD = "BLOCK_RECORD"; // TODO GJ COMMENT: Added
     public static final String LTYPE = "LTYPE";
     public static final String ENDTAB = "ENDTAB";
     public static final String BLOCKS = "BLOCKS";
@@ -18,6 +19,7 @@ public interface DXFConstants {
     public static final String ENDBLK = "ENDBLK";
     public static final String ENTITIES = "ENTITIES";
     public static final String LINE = "LINE";
+    public static final String SPLINE = "SPLINE";
     public static final String ARC = "ARC";
     public static final String CIRCLE = "CIRCLE";
     public static final String POLYLINE = "POLYLINE";

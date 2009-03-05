@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
+
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
@@ -26,6 +28,22 @@ public class DXFPolyline extends DXFEntity {
     public String _id;
     public int _flag = 0;
     public Vector<DXFVertex> theVertex = new Vector<DXFVertex>();
+
+    public DXFPolyline(DXFPolyline newPolyLine) {
+        super(newPolyLine.getColor(), newPolyLine.getRefLayer(), 0, newPolyLine.getLineType(), newPolyLine.getThickness());
+        _id = newPolyLine._id;
+
+        for (int i = 0; i < newPolyLine.theVertex.size(); i++) {
+            theVertex.add(new DXFVertex(newPolyLine.theVertex.elementAt(i)));
+        }
+        _flag = newPolyLine._flag;
+
+        setType(newPolyLine.getType());
+        setStartingLineNumber(newPolyLine.getStartingLineNumber());
+        setUnivers(newPolyLine.getUnivers());
+
+        setName("DXFPolyline");
+    }
 
     public DXFPolyline(String name, int flag, int c, DXFLayer l, Vector<DXFVertex> v, int visibility, DXFLineType lineType, double thickness) {
         super(c, l, visibility, lineType, thickness);
@@ -58,7 +76,7 @@ public class DXFPolyline extends DXFEntity {
             try {
                 gc = cvp.read(br);
             } catch (DXFParseException ex) {
-                throw new IOException("DXF parse error" + ex.getLocalizedMessage());
+                throw new IOException("DXF parse error " + ex.getLocalizedMessage());
             } catch (EOFException e) {
                 doLoop = false;
                 break;
@@ -97,13 +115,13 @@ public class DXFPolyline extends DXFEntity {
                 default:
                     break;
             }
-
         }
+
         DXFPolyline e = new DXFPolyline(name, flag, c, l, lv, visibility, lineType, DXFTables.defaultThickness);
         if ((flag & 1) == 1) {
-            e.setType(DXFEntity.TYPE_POLYGON);
+            e.setType(GeometryType.POLYGON);
         } else {
-            e.setType(DXFEntity.TYPE_LINE);
+            e.setType(GeometryType.LINE);
         }
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
@@ -134,19 +152,24 @@ public class DXFPolyline extends DXFEntity {
     @Override
     public Geometry getGeometry() {
         if (geometry == null) {
-            Coordinate[] ca = toCoordinateArray();
-            if (ca != null && ca.length > 1) {
-                if (getType() == DXFEntity.TYPE_POLYGON) {
-                    LinearRing lr = getUnivers().getGeometryFactory().createLinearRing(ca);
-                    geometry = getUnivers().getGeometryFactory().createPolygon(lr, null);
-                } else {
-                    geometry = getUnivers().getGeometryFactory().createLineString(ca);
-                }
-            } else {
-                addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
-            }
+            updateGeometry();
         }
         return super.getGeometry();
+    }
+
+    @Override
+    public void updateGeometry() {
+        Coordinate[] ca = toCoordinateArray();
+        if (ca != null && ca.length > 1) {
+            if (getType() == GeometryType.POLYGON) {
+                LinearRing lr = getUnivers().getGeometryFactory().createLinearRing(ca);
+                geometry = getUnivers().getGeometryFactory().createPolygon(lr, null);
+            } else {
+                geometry = getUnivers().getGeometryFactory().createLineString(ca);
+            }
+        } else {
+            addError("coordinate array faulty, size: " + (ca == null ? 0 : ca.length));
+        }
     }
 
     public Coordinate[] toCoordinateArray() {
@@ -160,6 +183,17 @@ public class DXFPolyline extends DXFEntity {
             DXFVertex v = (DXFVertex) it.next();
             lc.add(v.toCoordinate());
         }
+
+        if (getType() == GeometryType.POLYGON) {
+            if (lc.size() >= 2) {
+                Coordinate firstc = lc.get(0);
+                Coordinate lastc = lc.get(lc.size() - 1);
+                if (!firstc.equals2D(lastc)) {
+                    lc.add(firstc);
+                }
+            }
+        }
+
         /* TODO uitzoeken of lijn zichzelf snijdt, zo ja nodding
          * zie jts union:
          * Collection lineStrings = . . .
@@ -167,12 +201,25 @@ public class DXFPolyline extends DXFEntity {
          * for (int i = 1; i < lineStrings.size(); i++) {
          * nodedLineStrings = nodedLineStrings.union((LineString)lineStrings.get(i));
          * */
-        return lc.toArray(new Coordinate[]{});
+        return rotateAndPlace(lc.toArray(new Coordinate[]{}));
     }
 
     @Override
     public DXFEntity translate(double x, double y) {
+        // Move all vertices
+        Iterator iter = theVertex.iterator();
+        while (iter.hasNext()) {
+            DXFVertex vertex = (DXFVertex) iter.next();
+            vertex._point.x += x;
+            vertex._point.y += y;
+        }
+
         return this;
+    }
+
+    @Override
+    public DXFEntity clone() {
+        return new DXFPolyline(this);
     }
 }
 

@@ -7,7 +7,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.EOFException;
 import java.io.IOException;
 
-
+import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.header.DXFLayer;
 import nl.b3p.geotools.data.dxf.header.DXFLineType;
@@ -22,14 +22,26 @@ public class DXFText extends DXFEntity {
 
     private static final Log log = LogFactory.getLog(DXFText.class);
     public DXFPoint _point = new DXFPoint(); // 10 ,20
-    protected String _value = ""; // 1
-    protected double _height = 0; // 40
-    protected double _rotation = 0; // 50
-    protected int _align = 0; // 72
-    protected String _style = ""; // 7
-    protected double _angle = 0; // 51
-    protected double _zoomfactor = 1; // 41
-    protected Rectangle2D.Double _r = new Rectangle2D.Double();
+    public String _value = ""; // 1
+    public double _height = 0; // 40
+    public double _rotation = 0; // 50
+    public int _align = 0; // 72
+    public String _style = ""; // 7
+    public double _angle = 0; // 51
+    public double _zoomfactor = 1; // 41
+    public Rectangle2D.Double _r = new Rectangle2D.Double();
+
+    public DXFText(DXFText newText) {
+        this(newText._point._point.x, newText._point._point.y, newText._value, newText._rotation, newText.getThickness(), newText._height,
+                newText._align, newText._style, newText.getColor(), newText.getRefLayer(), newText._angle, newText._zoomfactor, 0, newText.getLineType());
+
+        setType(newText.getType());
+        setStartingLineNumber(newText.getStartingLineNumber());
+        setUnivers(newText.getUnivers());
+
+        // Hack voor label
+        setKey(newText._value);
+    }
 
     public DXFText(double x, double y, String value, double rotation, double thickness, double height, int align, String style, int c, DXFLayer l, double angle, double zoomFactor, int visibility, DXFLineType lineType) {
         super(c, l, visibility, lineType, thickness);
@@ -129,11 +141,12 @@ public class DXFText extends DXFEntity {
             }
 
         }
+
         DXFText e = new DXFText(x, y, value, rotation, thickness, height, align, style, c, l, angle, zoomfactor, visibility, lineType);
-        e.setType(DXFEntity.TYPE_POINT);
+        e.setType(GeometryType.POINT);
         e.setStartingLineNumber(sln);
         e.setUnivers(univers);
-        /* TODO hack voor label */
+        // Hack voor label
         e.setKey(value);
         log.debug(e.toString(x, y, value, rotation, thickness, height, align, style, c, angle, zoomfactor, visibility));
         log.debug(">Exit at line: " + br.getLineNumber());
@@ -143,9 +156,12 @@ public class DXFText extends DXFEntity {
     @Override
     public Geometry getGeometry() {
         if (geometry == null) {
-            geometry = getUnivers().getGeometryFactory().createPoint(toCoordinate());
         }
         return super.getGeometry();
+    }
+
+    public void updateGeometry() {
+        geometry = getUnivers().getGeometryFactory().createPoint(toCoordinate());
     }
 
     public Coordinate toCoordinate() {
@@ -153,7 +169,7 @@ public class DXFText extends DXFEntity {
             addError("coordinate can not be created.");
             return null;
         }
-        return new Coordinate(_point._point.getX(), _point._point.getY());
+        return rotateAndPlace(new Coordinate(_point._point.getX(), _point._point.getY()));
     }
 
     public String toString(double x, double y, String value, double rotation, double thickness, double height, double align, String style, int c, double angle, double zoomfactor, int visibility) {
@@ -186,10 +202,16 @@ public class DXFText extends DXFEntity {
         s.append("]");
         return s.toString();
     }
-    
+
     @Override
     public DXFEntity translate(double x, double y) {
+        _point._point.x += x;
+        _point._point.y += y;
         return this;
     }
-    
+
+    @Override
+    public DXFEntity clone() {
+        return new DXFText(this);
+    }
 }
