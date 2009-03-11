@@ -11,8 +11,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.geotools.data.AbstractFileDataStore;
 import org.geotools.data.FeatureReader;
-import org.geotools.feature.FeatureType;
 import java.util.ArrayList;
+import org.geotools.catalog.ServiceInfo;
+import org.geotools.feature.FeatureType;
 
 /**
  * DataStore for reading a DXF file produced by Autodesk.
@@ -36,7 +37,6 @@ public class DXFDataStore extends AbstractFileDataStore {
     private String strippedFileName;
     private String typeName;
     private ArrayList dxfInsertsFilter = new ArrayList();
-    
 
     public DXFDataStore(URL url, String srs) throws IOException {
         this.url = url;
@@ -77,7 +77,7 @@ public class DXFDataStore extends AbstractFileDataStore {
 
     public FeatureType getSchema(String typeName) throws IOException {
         // Update featureReader with typename and return featureType
-        return getFeatureReader(typeName).getFeatureType();
+        return (FeatureType) getFeatureReader(typeName).getFeatureType();
     }
 
     public FeatureType getSchema() throws IOException {
