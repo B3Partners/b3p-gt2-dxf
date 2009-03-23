@@ -12,7 +12,6 @@ import org.apache.commons.logging.LogFactory;
 import org.geotools.data.AbstractFileDataStore;
 import org.geotools.data.FeatureReader;
 import java.util.ArrayList;
-import org.geotools.catalog.ServiceInfo;
 import org.geotools.feature.FeatureType;
 
 /**
