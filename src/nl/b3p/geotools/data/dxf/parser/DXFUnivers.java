@@ -194,7 +194,6 @@ public class DXFUnivers implements DXFConstants {
             bro = _entForUpdate.get(i);
             boolean isInsert = false;
 
-            // TODO GJ Delete instanceof counter
             if (bro instanceof DXFInsert) {
                 numInserts++;
                 isInsert = true;

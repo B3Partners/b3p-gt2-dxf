@@ -12,7 +12,8 @@ import org.apache.commons.logging.LogFactory;
 import org.geotools.data.AbstractFileDataStore;
 import org.geotools.data.FeatureReader;
 import java.util.ArrayList;
-import org.geotools.feature.FeatureType;
+import org.geotools.data.ServiceInfo;
+import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * DataStore for reading a DXF file produced by Autodesk.
@@ -74,12 +75,12 @@ public class DXFDataStore extends AbstractFileDataStore {
         dxfInsertsFilter.add(filteredName);
     }
 
-    public FeatureType getSchema(String typeName) throws IOException {
-        // Update featureReader with typename and return featureType
-        return (FeatureType) getFeatureReader(typeName).getFeatureType();
+    public SimpleFeatureType getSchema(String typeName) throws IOException {
+        // Update featureReader with typename and return SimpleFeatureType
+        return (SimpleFeatureType) getFeatureReader(typeName).getFeatureType();
     }
 
-    public FeatureType getSchema() throws IOException {
+    public SimpleFeatureType getSchema() throws IOException {
         if (typeName == null) {
             log.warn("Typename is null, probably because of using getFeatureSource().\n" +
                     "\tPlease use getFeatureSource(typename)");
@@ -122,7 +123,12 @@ public class DXFDataStore extends AbstractFileDataStore {
         }
     }
 
-    public String getInfo() throws IOException {
-        return ((DXFFeatureReader) getFeatureReader()).getInfo();
+    @Override
+    public ServiceInfo getInfo() {
+        try {
+            return ((DXFFeatureReader) getFeatureReader()).getInfo();
+        } catch (IOException ex) {
+            return null;
+        }
     }
 }

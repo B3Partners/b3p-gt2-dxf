@@ -5,8 +5,6 @@ package nl.b3p.geotools.data.dxf;
 
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Point;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Iterator;
@@ -17,19 +15,12 @@ import java.net.URL;
 import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
 import nl.b3p.geotools.data.dxf.entities.DXFInsert;
-import nl.b3p.geotools.data.dxf.entities.DXFPoint;
 import nl.b3p.geotools.data.dxf.entities.DXFText;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import org.geotools.data.DataSourceException;
 import org.geotools.data.FeatureReader;
-import org.geotools.feature.AttributeType;
-import org.geotools.feature.AttributeTypeFactory;
-import org.geotools.feature.Feature;
-import org.geotools.feature.FeatureType;
-import org.geotools.feature.FeatureTypes;
-import org.geotools.feature.IllegalAttributeException;
-import org.geotools.feature.type.GeometricAttributeType;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.geotools.referencing.CRS;
@@ -38,6 +29,13 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 
 import org.apache.commons.io.input.CountingInputStream;
+import org.geotools.data.DefaultServiceInfo;
+import org.geotools.data.ServiceInfo;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.opengis.feature.IllegalAttributeException;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * @author Matthijs Laan, B3Partners
@@ -45,12 +43,13 @@ import org.apache.commons.io.input.CountingInputStream;
 public class DXFFeatureReader implements FeatureReader {
 
     private static final Log log = LogFactory.getLog(DXFFeatureReader.class);
-    private FeatureType ft;
+    private SimpleFeatureType ft;
     private Iterator<DXFEntity> entityIterator;
     private GeometryType geometryType = null;
-    private Feature cache;
+    private SimpleFeature cache;
     private DXFUnivers theUnivers;
     private ArrayList dxfInsertsFilter;
+    private int featureID = 0;
 
     public DXFFeatureReader(URL url, String typeName, String srs, GeometryType geometryType, ArrayList dxfInsertsFilter) throws IOException, DXFParseException {
         CountingInputStream cis = null;
@@ -108,37 +107,41 @@ public class DXFFeatureReader implements FeatureReader {
                 log.error("SRID could not be determined from crs!");
             }
         }
-        log.info("SRID used by feature reader: " + SRID);
+        log.info("SRID used by SimpleFeature reader: " + SRID);
 
 
         try {
-            GeometricAttributeType geometryAttributeType = new GeometricAttributeType("the_geom", geometryType.getGeometryClass(), true, null, crs, null);
-            ft = FeatureTypes.newFeatureType(
-                    new AttributeType[]{
-                        geometryAttributeType,
-                        AttributeTypeFactory.newAttributeType("name", String.class),
-                        AttributeTypeFactory.newAttributeType("key", String.class),
-                        AttributeTypeFactory.newAttributeType("urlLink", String.class),
-                        AttributeTypeFactory.newAttributeType("lineType", String.class),
-                        AttributeTypeFactory.newAttributeType("color", String.class),
-                        AttributeTypeFactory.newAttributeType("layer", String.class),
-                        AttributeTypeFactory.newAttributeType("thickness", Double.class),
-                        AttributeTypeFactory.newAttributeType("rotation", Double.class),
-                        AttributeTypeFactory.newAttributeType("visible", Integer.class),
-                        AttributeTypeFactory.newAttributeType("entryLineNumber", Integer.class),
-                        AttributeTypeFactory.newAttributeType("parseError", Integer.class),
-                        AttributeTypeFactory.newAttributeType("error", String.class)
-                    }, typeName);
+
+            SimpleFeatureTypeBuilder ftb = new SimpleFeatureTypeBuilder();
+            ftb.setName(typeName);
+            ftb.setSRS(srs);
+
+            ftb.add("the_geom", Geometry.class);
+            ftb.add("name", String.class);
+            ftb.add("key", String.class);
+            ftb.add("urlLink", String.class);
+            ftb.add("lineType", String.class);
+            ftb.add("color", String.class);
+            ftb.add("layer", String.class);
+            ftb.add("thickness", Double.class);
+            ftb.add("rotation", Double.class);
+            ftb.add("visible", Integer.class);
+            ftb.add("entryLineNumber", Integer.class);
+            ftb.add("parseError", Integer.class);
+            ftb.add("error", String.class);
+
+            ft = ftb.buildFeatureType();
+        
         } catch (Exception e) {
-            throw new DataSourceException("Error creating FeatureType: " + typeName, e);
+            throw new DataSourceException("Error creating SimpleFeatureType: " + typeName, e);
         }
     }
 
-    public FeatureType getFeatureType() {
+    public SimpleFeatureType getFeatureType() {
         return ft;
     }
 
-    public Feature next() throws IOException, IllegalAttributeException, NoSuchElementException {
+    public SimpleFeature next() throws IOException, IllegalAttributeException, NoSuchElementException {
         return cache;
     }
 
@@ -159,7 +162,7 @@ public class DXFFeatureReader implements FeatureReader {
                 if (passedFilter) {
                     g = entry.getGeometry();
 
-                    cache = ft.create(new Object[]{
+                    cache = SimpleFeatureBuilder.build(ft, new Object[]{
                                 g,
                                 entry.getName(),
                                 entry.getKey(),
@@ -173,14 +176,14 @@ public class DXFFeatureReader implements FeatureReader {
                                 new Integer(entry.getStartingLineNumber()),
                                 new Integer(entry.isParseError() ? 1 : 0),
                                 entry.getErrorDescription()
-                            });
+                            }, Integer.toString(featureID++));
+
                     return true;
                 } else {
                     // No next features found
                     return false;
                 }
             } catch (IllegalAttributeException ex) {
-                // TODO GJ DELETE
                 log.error(ex.getLocalizedMessage() + "\n" + entry.getErrorDescription());
                 return false;
             }
@@ -190,7 +193,7 @@ public class DXFFeatureReader implements FeatureReader {
     /**
      * Check if geometry of entry is equal to filterType
      *
-     * @param entry     Feature from iterator; entry to check it's geometryType from
+     * @param entry     SimpleFeature from iterator; entry to check it'serviceInfo geometryType from
      * @return          if entry.getType equals geometryType
      */
     private boolean passedFilter(DXFEntity entry) {
@@ -208,7 +211,7 @@ public class DXFFeatureReader implements FeatureReader {
             try {
                 // Filter invalid geometries
                 if (!entry.getGeometry().isValid()) {
-                    // Only display message for own featuretype, otherwise it will be displayed for every typename
+                    // Only display message for own SimpleFeatureType, otherwise it will be displayed for every typename
                     if (isEqual) {
                         log.info("Invalid " + entry.getType() + " found while parsing table");
                     }
@@ -216,14 +219,13 @@ public class DXFFeatureReader implements FeatureReader {
                 }
 
                 // Skip entryErrors from Inserts
-                if(entry.isParseError()){
-                    if(entry instanceof DXFInsert){
+                if (entry.isParseError()) {
+                    if (entry instanceof DXFInsert) {
                         return false;
                     }
                 }
 
             } catch (Exception ex) {
-                // TODO GJ DELETE
                 log.error("Skipping geometry; problem with " + entry.getName() + ": " + ex.getLocalizedMessage());
                 return false;
             }
@@ -232,8 +234,12 @@ public class DXFFeatureReader implements FeatureReader {
         }
     }
 
-    public String getInfo() {
-        return (theUnivers == null ? "Univers is null" : theUnivers.getInfo());
+    public ServiceInfo getInfo() {
+        DefaultServiceInfo serviceInfo = new DefaultServiceInfo();
+        serviceInfo.setTitle("DXF FeatureReader");
+        serviceInfo.setDescription(theUnivers == null ? "Univers is null" : theUnivers.getInfo());
+
+        return serviceInfo;
     }
 
     public void close() throws IOException {

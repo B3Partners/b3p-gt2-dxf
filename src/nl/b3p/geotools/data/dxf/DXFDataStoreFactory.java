@@ -15,7 +15,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFactorySpi;
-import org.geotools.data.DataStoreFactorySpi.Param;
 import org.geotools.data.FileDataStoreFactorySpi;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
