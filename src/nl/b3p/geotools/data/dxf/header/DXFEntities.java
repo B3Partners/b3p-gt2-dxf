@@ -2,6 +2,10 @@ package nl.b3p.geotools.data.dxf.header;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.Vector;
 
 import nl.b3p.geotools.data.dxf.entities.DXFArc;
@@ -31,6 +35,7 @@ public class DXFEntities implements DXFConstants {
 
     private static final Log log = LogFactory.getLog(DXFEntities.class);
     public Vector<DXFEntity> theEntities = new Vector<DXFEntity>();
+    public Map<String,Integer> unsupportedEntitiesCounts;
 
     public DXFEntities() {
     }
@@ -48,6 +53,8 @@ public class DXFEntities implements DXFConstants {
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
+        Map<String,Integer> unsupportedEntitiesCounts = new HashMap<String,Integer>();
+        
         int sln = br.getLineNumber();
         log.debug(">Enter at line: " + sln);
         boolean doLoop = true;
@@ -83,9 +90,7 @@ public class DXFEntities implements DXFConstants {
                         dxfe = DXFPoint.read(br, univers);
                     } else if (type.equals(SOLID)) {
                         dxfe = DXFSolid.read(br, univers);
-                    } else if (type.equals(TEXT)) {
-                        dxfe = DXFText.read(br, univers);
-                    } else if (type.equals(MTEXT)) {
+                    } else if (type.equals(TEXT) || type.equals(MTEXT) || type.equals(ATTRIB)) {
                         dxfe = DXFText.read(br, univers);
                     } else if (type.equals(INSERT)) {
                         dxfe = DXFInsert.read(br, univers);
@@ -97,9 +102,16 @@ public class DXFEntities implements DXFConstants {
                         dxfe = DXFEllipse.read(br, univers);
                     } else if (type.equals(SPLINE)) {
                         dxfe = DXFSpLine.read(br, univers);
-                    }
+                    } 
                     if (dxfe != null) {
                         sEnt.add(dxfe);
+                    } else {
+                        Integer count = unsupportedEntitiesCounts.get(type);
+                        if(count == null) {
+                            count = 0;
+                        }
+                        count++;
+                        unsupportedEntitiesCounts.put(type, count);
                     }
                     break;
                 default:
@@ -108,8 +120,11 @@ public class DXFEntities implements DXFConstants {
 
         }
         DXFEntities e = new DXFEntities(sEnt);
+        e.unsupportedEntitiesCounts = unsupportedEntitiesCounts;
+
         log.debug(e.toString(sEnt.size()));
         log.debug(">Exit at line: " + br.getLineNumber());
+
         return e;
     }
 

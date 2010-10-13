@@ -12,6 +12,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
@@ -87,6 +91,8 @@ public class DXFUnivers implements DXFConstants {
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
 
+        Map<String,Integer> unsupportedEntitiesCounts = new HashMap<String,Integer>();
+
         boolean doLoop = true;
         while (doLoop) {
             cvp = new DXFCodeValuePair();
@@ -125,6 +131,15 @@ public class DXFUnivers implements DXFConstants {
                     } else if (name.equals(ENTITIES)) {
                         DXFEntities dxfes = DXFEntities.readEntities(br, this);
                         theEntities.addAll(dxfes.theEntities);
+
+                        for(Entry<String,Integer> entry: dxfes.unsupportedEntitiesCounts.entrySet()) {
+                            Integer count = unsupportedEntitiesCounts.get(entry.getKey());
+                            if(count == null) {
+                                count = 0;
+                            }
+                            count = count + entry.getValue();
+                            unsupportedEntitiesCounts.put(entry.getKey(), count);
+                        }
                     // toevoegen aan layer doen we even niet, waarschijnlijk niet nodig
                     //if (o != null && o._refLayer != null) {
                     //    o._refLayer.theEnt.add(o);
@@ -135,6 +150,17 @@ public class DXFUnivers implements DXFConstants {
                     break;
             }
 
+        }
+
+        if(unsupportedEntitiesCounts.isEmpty()) {
+            log.debug("No unsupported entities found in this section");
+        } else {
+            log.info("Unsupported entities found:");
+            SortedSet<String> types = new TreeSet<String>(unsupportedEntitiesCounts.keySet());
+            for(String type: types) {
+                int c = unsupportedEntitiesCounts.get(type);
+                log.info(" " + type + ": " + c + " time" + (c > 1 ? "s" : ""));
+            }
         }
     }
 

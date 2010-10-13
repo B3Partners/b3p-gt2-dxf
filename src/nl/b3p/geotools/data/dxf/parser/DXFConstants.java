@@ -36,6 +36,7 @@ public interface DXFConstants {
     public static final String ELLIPSE = "ELLIPSE";
     public static final String CLASSES = "CLASSES";
     public static final String ENDSEC = "ENDSEC";
+    public static final String ATTRIB = "ATTRIB";
     /* not supported */
     public static final String OBJECTS = "OBJECTS";
     public static final String THUMBNAILIMAGE = "THUMBNAILIMAGE";
