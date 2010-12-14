@@ -91,7 +91,7 @@ public class DXFEntities implements DXFConstants {
                     } else if (type.equals(SOLID)) {
                         dxfe = DXFSolid.read(br, univers);
                     } else if (type.equals(TEXT) || type.equals(MTEXT) || type.equals(ATTRIB)) {
-                        dxfe = DXFText.read(br, univers);
+                        dxfe = DXFText.read(br, univers, type.equals(MTEXT));
                     } else if (type.equals(INSERT)) {
                         dxfe = DXFInsert.read(br, univers);
                     } else if (type.equals(DIMENSION)) {
