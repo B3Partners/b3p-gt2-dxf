@@ -3,9 +3,10 @@ package nl.b3p.geotools.data.dxf.entities;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
-import java.awt.geom.Rectangle2D;
 import java.io.EOFException;
 import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.regex.Pattern;
 
 import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
@@ -21,59 +22,44 @@ import org.apache.commons.logging.LogFactory;
 public class DXFText extends DXFEntity {
 
     private static final Log log = LogFactory.getLog(DXFText.class);
-    public DXFPoint _point = new DXFPoint(); // 10 ,20
-    public String _value = ""; // 1
-    public double _height = 0; // 40
-    public double _rotation = 0; // 50
-    public int _align = 0; // 72
-    public String _style = ""; // 7
-    public double _angle = 0; // 51
-    public double _zoomfactor = 1; // 41
-    public Rectangle2D.Double _r = new Rectangle2D.Double();
 
-    public DXFText(DXFText newText) {
-        this(newText._point._point.x, newText._point._point.y, newText._value, newText._rotation, newText.getThickness(), newText._height,
-                newText._align, newText._style, newText.getColor(), newText.getRefLayer(), newText._angle, newText._zoomfactor, 0, newText.getLineType());
+    private Double x = null, y = null;
 
-        setType(newText.getType());
-        setStartingLineNumber(newText.getStartingLineNumber());
-        setUnivers(newText.getUnivers());
-
-        // Hack voor label
-        setKey(newText._value);
+    public Double getX() {
+        return x;
     }
 
-    public DXFText(double x, double y, String value, double rotation, double thickness, double height, int align, String style, int c, DXFLayer l, double angle, double zoomFactor, int visibility, DXFLineType lineType) {
-        super(c, l, visibility, lineType, thickness);
-        _point = new DXFPoint(x, y, c, l, visibility, thickness);
-        _value = value;
-        _rotation = rotation;
-        _height = height;
-        _align = align;
-        _style = style;
-        _angle = angle;
-        _zoomfactor = zoomFactor;
-        setName("DXFText");
+    public void setX(Double x) {
+        this.x = x;
     }
 
-    public static DXFText read(DXFLineNumberReader br, DXFUnivers univers) throws IOException {
-        DXFLayer l = null;
-        String value = "", style = "STANDARD";
-        int visibility = 0, align = 0, c = -1;
-        DXFLineType lineType = null;
-        double x = 0,
-                y = 0,
-                angle = 0,
-                rotation = 0,
-                zoomfactor = 1,
-                thickness = DXFTables.defaultThickness,
-                height = 0;
+    public Double getY() {
+        return y;
+    }
 
-        int sln = br.getLineNumber();
-        log.debug(">>Enter at line: " + sln);
+    public void setY(Double y) {
+        this.y = y;
+    }
+
+    public DXFText(int c, DXFLayer l, int visibility, DXFLineType lineType, double thickness) {
+        super(c, l , visibility, lineType, thickness);
+    }
+
+    public static DXFText read(DXFLineNumberReader br, DXFUnivers univers, boolean isMText) throws IOException {
+
+        DXFText t = new DXFText(0, null, 0, null, DXFTables.defaultThickness);
+        t.setUnivers(univers);
+
+        t.setStartingLineNumber(br.getLineNumber());
 
         DXFCodeValuePair cvp = null;
         DXFGroupCode gc = null;
+
+        // MTEXT direction vector
+        Double directionX = null, directionY = null;
+
+        String textposhor = "left";
+        String textposver = "bottom";
 
         boolean doLoop = true;
         while (doLoop) {
@@ -89,129 +75,180 @@ public class DXFText extends DXFEntity {
 
             switch (gc) {
                 case TYPE:
-                    String type = cvp.getStringValue();
                     // geldt voor alle waarden van type
                     br.reset();
                     doLoop = false;
                     break;
                 case X_1: //"10"
-                    x = cvp.getDoubleValue();
+                    t.setX(cvp.getDoubleValue());
                     break;
                 case Y_1: //"20"
-                    y = cvp.getDoubleValue();
+                    t.setY(cvp.getDoubleValue());
                     break;
                 case TEXT: //"1"
-                    value = cvp.getStringValue();
+                    t.setText(processOrStripTextCodes(cvp.getStringValue()));
                     break;
                 case ANGLE_1: //"50"
-                    rotation = cvp.getDoubleValue();
+                    t.setTextrotation(cvp.getDoubleValue());
+                    break;
+                case X_2: // 11, X-axis direction vector
+                    directionX = cvp.getDoubleValue();
+                    break;
+                case Y_2: // 21, Y-axis direction vector
+                    directionY = cvp.getDoubleValue();
                     break;
                 case THICKNESS: //"39"
-                    thickness = cvp.getDoubleValue();
+                    t.setThickness(cvp.getDoubleValue());
                     break;
                 case DOUBLE_1: //"40"
-                    height = cvp.getDoubleValue();
+                    t.setTextheight(cvp.getDoubleValue());
                     break;
-                case ANGLE_2: //"51"
-                    angle = cvp.getDoubleValue();
+                case INT_2: // 71: MTEXT attachment point
+                    switch(cvp.getShortValue()) {
+                        case 1: textposver = "top";    textposhor = "left"; break;
+                        case 2: textposver = "top";    textposhor = "center"; break;
+                        case 3: textposver = "top";    textposhor = "right"; break;
+                        case 4: textposver = "middle"; textposhor = "left"; break;
+                        case 5: textposver = "middle"; textposhor = "center"; break;
+                        case 6: textposver = "middle"; textposhor = "right"; break;
+                        case 7: textposver = "bottom"; textposhor = "left"; break;
+                        case 8: textposver = "bottom"; textposhor = "center"; break;
+                        case 9: textposver = "bottom"; textposhor = "right"; break;
+                    }
                     break;
-                case DOUBLE_2: //"41"
-                    zoomfactor = cvp.getDoubleValue();
+                case INT_3: // 72: TEXT horizontal text justification type
+                    
+                    // komen niet helemaal overeen, maar maak voor TEXT en MTEXT hetzelfde 
+                    
+                    switch(cvp.getShortValue()) {
+                        case 0: textposhor = "left"; break;
+                        case 1: textposhor = "center"; break;
+                        case 2: textposhor = "right"; break;
+                        case 3: // aligned
+                        case 4: // middle
+                        case 5: // fit
+                            // negeer, maar hier "center" van
+                            textposhor = "center";
+                    }
                     break;
-                case INT_3: //"72"
-                    align = cvp.getShortValue();
+                case INT_4:
+                    switch(cvp.getShortValue()) {
+                        case 0: textposver = "bottom"; break; // eigenlijk baseline
+                        case 1: textposver = "bottom"; break;
+                        case 2: textposver = "middle"; break;
+                        case 3: textposver = "top"; break;
+                    }
                     break;
                 case LAYER_NAME: //"8"
-                    l = univers.findLayer(cvp.getStringValue());
+                    t._refLayer = univers.findLayer(cvp.getStringValue());
                     break;
                 case COLOR: //"62"
-                    c = cvp.getShortValue();
-                    break;
-                case TEXT_STYLE_NAME: //"7"
-                    style = cvp.getStringValue();
+                    t.setColor(cvp.getShortValue());
                     break;
                 case VISIBILITY: //"60"
-                    visibility = cvp.getShortValue();
-                    break;
-                case LINETYPE_NAME: //"6"
-                    lineType = univers.findLType(cvp.getStringValue());
+                    t.setVisible(cvp.getShortValue() == 0);
                     break;
                 default:
                     break;
             }
-
         }
 
-        DXFText e = new DXFText(x, y, value, rotation, thickness, height, align, style, c, l, angle, zoomfactor, visibility, lineType);
-        e.setType(GeometryType.POINT);
-        e.setStartingLineNumber(sln);
-        e.setUnivers(univers);
-        // Hack voor label
-        e.setKey(value);
-        log.debug(e.toString(x, y, value, rotation, thickness, height, align, style, c, angle, zoomfactor, visibility));
-        log.debug(">Exit at line: " + br.getLineNumber());
-        return e;
+        t.setTextposvertical(textposver);
+        t.setTextposhorizontal(textposhor);
+
+        if(isMText && directionX != null && directionY != null) {
+
+            t.setTextrotation(calculateRotationFromDirectionVector(directionX, directionY));
+            if(log.isDebugEnabled()) {
+                log.debug(MessageFormat.format("MTEXT entity at line number %d: text pos (%.4f,%.4f), direction vector (%.4f,%.4f), calculated text rotation %.2f degrees",
+                        t.getStartingLineNumber(),
+                        t.getX(), t.getY(),
+                        directionX, directionY,
+                        t.getTextrotation()));
+            }
+        }
+
+        t.setType(GeometryType.POINT);
+
+        return t;
+    }
+
+    private static String processOrStripTextCodes(String text) {
+        if(text == null) {
+            return null;
+        }
+
+        // http://docs.autodesk.com/ACD/2010/ENU/AutoCAD%202010%20User%20Documentation/index.html?url=WS1a9193826455f5ffa23ce210c4a30acaf-63b9.htm,topicNumber=d0e123454
+
+        text = text.replaceAll("%%[cC]", "Ø");
+
+        text = text.replaceAll("\\\\[Pp]", "\r\n");
+        text = text.replaceAll("\\\\[Ll~]", "");
+        text = text.replaceAll(Pattern.quote("\\\\"), "\\");
+        text = text.replaceAll(Pattern.quote("\\{"), "{");
+        text = text.replaceAll(Pattern.quote("\\}"), "}");
+        text = text.replaceAll("\\\\[CcFfHhTtQqWwAa].*;", "");
+        return text;
+    }
+
+    private static double calculateRotationFromDirectionVector(double x, double y) {
+        double rotation;
+
+        // Hoek tussen vector (1,0) en de direction vector uit MText als theta:
+
+        // arccos (theta) = inproduct(A,B) / lengte(A).lengte(B)
+        // arccos (theta) = Bx / wortel(Bx^2 + By^2)
+
+        // indien hoek in kwadrant III of IV, dan theta = -(theta-2PI)
+
+        double length = Math.sqrt(x*x + y*y);
+
+        if(length == 0) {
+            rotation = 0;
+        } else {
+            double theta = Math.acos(x / length);
+
+            if((x <= 0 && y <= 0) || (x >= 0 && y <= 0)) {
+                theta = -(theta - 2*Math.PI);
+            }
+
+            // conversie van radialen naar graden
+            rotation = theta * (180/Math.PI);
+
+            if(Math.abs(360 - rotation) < 1e-4) {
+                rotation = 0;
+            }
+        }
+        return rotation;
     }
 
     @Override
     public Geometry getGeometry() {
         if (geometry == null) {
+            updateGeometry();
         }
-        return super.getGeometry();
+        return geometry;
     }
 
+    @Override
     public void updateGeometry() {
-        geometry = getUnivers().getGeometryFactory().createPoint(toCoordinate());
-    }
-
-    public Coordinate toCoordinate() {
-        if (_point == null || _point._point == null) {
-            addError("coordinate can not be created.");
-            return null;
+        if(x != null && y != null) {
+            Coordinate c = rotateAndPlace(new Coordinate(x, y));
+            setGeometry(getUnivers().getGeometryFactory().createPoint(c));
+        } else {
+            setGeometry(null);
         }
-        return rotateAndPlace(new Coordinate(_point._point.getX(), _point._point.getY()));
-    }
-
-    public String toString(double x, double y, String value, double rotation, double thickness, double height, double align, String style, int c, double angle, double zoomfactor, int visibility) {
-        StringBuffer s = new StringBuffer();
-        s.append("DXFText [");
-        s.append("x: ");
-        s.append(x + ", ");
-        s.append("y: ");
-        s.append(y + ", ");
-        s.append("value: ");
-        s.append(value + ", ");
-        s.append("rotation: ");
-        s.append(rotation + ", ");
-        s.append("thickness: ");
-        s.append(thickness + ", ");
-        s.append("height: ");
-        s.append(height + ", ");
-        s.append("align: ");
-        s.append(align + ", ");
-        s.append("style: ");
-        s.append(style + ", ");
-        s.append("color: ");
-        s.append(c + ", ");
-        s.append("angle: ");
-        s.append(angle + ", ");
-        s.append("zoomfactor: ");
-        s.append(zoomfactor + ", ");
-        s.append("visibility: ");
-        s.append(visibility);
-        s.append("]");
-        return s.toString();
     }
 
     @Override
     public DXFEntity translate(double x, double y) {
-        _point._point.x += x;
-        _point._point.y += y;
+        this.x += x;
+        this.y += y;
         return this;
     }
 
     @Override
     public DXFEntity clone() {
-        return new DXFText(this);
+        throw new UnsupportedOperationException();
     }
 }

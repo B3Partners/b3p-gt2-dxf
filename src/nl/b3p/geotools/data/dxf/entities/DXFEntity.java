@@ -18,21 +18,32 @@ public abstract class DXFEntity implements DXFConstants {
 
     private static final Log log = LogFactory.getLog(DXFEntity.class); 
     protected GeometryType geometryType;
+
     /* feature write */
     protected String _name = null;
-    protected String key = null;
-    protected String urlLink = null;
-    protected boolean parseError = false;
+
+    protected String _text = null;
+    protected String _textposhorizontal = null;
+    protected String _textposvertical = null;
+    protected Double _textheight = null;
+    protected Double _textrotation = null;
+
+    protected DXFLayer _refLayer;
+
+    protected int _color;
+    protected DXFLineType _lineType;
+    protected double _thickness;
+
+    protected boolean visible = true;
+
+    protected int startingLineNumber = -1;
     protected String errorDescription = null;
+    
     protected Geometry geometry = null;
+
     /* dxf read */
     protected DXFUnivers univers;
-    protected int startingLineNumber = -1;
-    protected DXFLineType _lineType;
-    protected int _color;
-    protected DXFLayer _refLayer;
-    protected double _thickness;
-    protected boolean visible = true;
+
     private double _entRotationAngle = 0.0;
     protected Coordinate _entBase = new Coordinate(0.0, 0.0);
 
@@ -126,16 +137,48 @@ public abstract class DXFEntity implements DXFConstants {
         return _name;
     }
 
-    public String getKey() {
-        return key;
+    public void setName(String _name) {
+        this._name = _name;
     }
 
-    public String getUrlLink() {
-        return urlLink;
+    public String getText() {
+        return _text;
     }
 
-    public boolean isParseError() {
-        return parseError;
+    public void setText(String _text) {
+        this._text = _text;
+    }
+
+    public Double getTextheight() {
+        return _textheight;
+    }
+
+    public void setTextheight(Double _textheight) {
+        this._textheight = _textheight;
+    }
+
+    public String getTextposhorizontal() {
+        return _textposhorizontal;
+    }
+
+    public void setTextposhorizontal(String _textposhorizontal) {
+        this._textposhorizontal = _textposhorizontal;
+    }
+
+    public String getTextposvertical() {
+        return _textposvertical;
+    }
+
+    public void setTextposvertical(String _textposvertical) {
+        this._textposvertical = _textposvertical;
+    }
+
+    public Double getTextrotation() {
+        return _textrotation;
+    }
+
+    public void setTextrotation(Double _textrotation) {
+        this._textrotation = _textrotation;
     }
 
     public String getErrorDescription() {
@@ -156,10 +199,6 @@ public abstract class DXFEntity implements DXFConstants {
 
     public void setType(GeometryType geometryType) {
         this.geometryType = geometryType;
-    }
-
-    public void setName(String name) {
-        this._name = name;
     }
 
     public void setVisible(boolean visible) {
@@ -235,28 +274,15 @@ public abstract class DXFEntity implements DXFConstants {
      * @param msg
      */
     public void addError(String msg) {
-        if (!parseError) {
-            parseError = true;
+        if (errorDescription == null) {
             errorDescription = "entry starting line " + getStartingLineNumber() + ": " + msg;
         } else {
             errorDescription += "; " + msg;
         }
     }
 
-    public void setParseError(boolean parseError) {
-        this.parseError = parseError;
-    }
-
     public void setErrorDescription(String errorDescription) {
         this.errorDescription = errorDescription;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public void setUrlLink(String urlLink) {
-        this.urlLink = urlLink;
     }
 
     public void setGeometry(Geometry geometry) {

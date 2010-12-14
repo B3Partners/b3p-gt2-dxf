@@ -118,16 +118,17 @@ public class DXFFeatureReader implements FeatureReader {
 
             ftb.add("the_geom", Geometry.class);
             ftb.add("name", String.class);
-            ftb.add("key", String.class);
-            ftb.add("urlLink", String.class);
-            ftb.add("lineType", String.class);
-            ftb.add("color", String.class);
+            ftb.add("text", String.class);
+            ftb.add("textposhorizontal", String.class);
+            ftb.add("textposvertical", String.class);
+            ftb.add("textheight", Double.class);
+            ftb.add("textrotation", Double.class);
             ftb.add("layer", String.class);
+            ftb.add("color", String.class);
+            ftb.add("linetype", String.class);
             ftb.add("thickness", Double.class);
-            ftb.add("rotation", Double.class);
             ftb.add("visible", Integer.class);
-            ftb.add("entryLineNumber", Integer.class);
-            ftb.add("parseError", Integer.class);
+            ftb.add("linenumber", Integer.class);
             ftb.add("error", String.class);
 
             ft = ftb.buildFeatureType();
@@ -165,16 +166,17 @@ public class DXFFeatureReader implements FeatureReader {
                     cache = SimpleFeatureBuilder.build(ft, new Object[]{
                                 g,
                                 entry.getName(),
-                                entry.getKey(),
-                                entry.getUrlLink(),
-                                entry.getLineTypeName(),
-                                entry.getColorRGB(),
+                                entry.getText(),
+                                entry.getTextposhorizontal(),
+                                entry.getTextposvertical(),
+                                entry.getTextheight(),
+                                entry.getTextrotation(),
                                 entry.getRefLayerName(),
+                                entry.getColorRGB(),
+                                entry.getLineTypeName(),
                                 new Double(entry.getThickness()),
-                                ((entry instanceof DXFText) ? new Double(((DXFText) entry)._rotation) : new Double(0.0)), // Text rotation
                                 new Integer(entry.isVisible() ? 1 : 0),
                                 new Integer(entry.getStartingLineNumber()),
-                                new Integer(entry.isParseError() ? 1 : 0),
                                 entry.getErrorDescription()
                             }, Integer.toString(featureID++));
 
@@ -219,7 +221,7 @@ public class DXFFeatureReader implements FeatureReader {
                 }
 
                 // Skip entryErrors from Inserts
-                if (entry.isParseError()) {
+                if (entry.getErrorDescription() != null) {
                     if (entry instanceof DXFInsert) {
                         return false;
                     }
