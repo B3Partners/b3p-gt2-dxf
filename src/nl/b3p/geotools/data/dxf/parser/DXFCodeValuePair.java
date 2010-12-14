@@ -80,63 +80,67 @@ public class DXFCodeValuePair {
         return gc;
     }
 
-    public short getShortValue() {
+    private IllegalArgumentException wrongTypeException(String askedType) {
+        return new IllegalArgumentException("Wrong value type requested (" + askedType + ") for group code #" + gc.toInt() + " which is of type " + gc.toType());
+    }
+
+    public short getShortValue() throws IllegalArgumentException {
         if (!DXFValueType.SHORT.equals(gc.toType())) {
-            throw new Error("Wrong Value Type for Group Code!");
+            throw wrongTypeException("short");
         }
         return shortValue;
     }
 
-    public int getIntValue() {
+    public int getIntValue() throws IllegalArgumentException {
         if (!DXFValueType.INTEGER.equals(gc.toType())) {
-            throw new Error("Wrong Value Type for Group Code!");
+            throw wrongTypeException("integer");
         }
         return intValue;
     }
 
-    public String getStringValue() {
+    public String getStringValue() throws IllegalArgumentException {
         if (!DXFValueType.STRING.equals(gc.toType())) {
-            throw new Error("Wrong Value Type for Group Code!");
+            throw wrongTypeException("string");
         }
         return stringValue;
     }
 
-    public boolean isBooleanValue() {
+    public boolean isBooleanValue() throws IllegalArgumentException {
         if (!DXFValueType.BOOLEAN.equals(gc.toType())) {
-            throw new Error("Wrong Value Type for Group Code!");
+            throw wrongTypeException("boolean");
         }
         return booleanValue;
     }
 
-    public double getDoubleValue() {
+    public double getDoubleValue() throws IllegalArgumentException {
         if (!DXFValueType.DOUBLE.equals(gc.toType())) {
-            throw new Error("Wrong Value Type for Group Code!");
+            throw wrongTypeException("double");
         }
         return doubleValue;
     }
 
-    public long getLongValue() {
+    public long getLongValue() throws IllegalArgumentException {
         if (!DXFValueType.LONG.equals(gc.toType())) {
-            throw new Error("Wrong Value Type for Group Code!");
+            throw wrongTypeException("long");
         }
         return longValue;
     }
 
-    public String getHandleHexValue() {
+    public String getHandleHexValue() throws IllegalArgumentException {
         if (!DXFValueType.HANDLEHEX.equals(gc.toType())) {
-            throw new Error("Wrong Value Type for Group Code!");
+            throw wrongTypeException("handlehex");
         }
         return handleHexValue;
     }
 
-    public String getIdHexValue() {
+    public String getIdHexValue() throws IllegalArgumentException {
         if (!DXFValueType.IDHEX.equals(gc.toType())) {
-            throw new Error("Wrong Value Type for Group Code!");
+            throw wrongTypeException("idhex");
         }
         return idHexValue;
     }
 
-    public String getBinHexValue() {
+    public String getBinHexValue() throws IllegalArgumentException {
         if (!DXFValueType.BINHEX.equals(gc.toType())) {
             throw new Error("Wrong Value Type for Group Code!");
         }
