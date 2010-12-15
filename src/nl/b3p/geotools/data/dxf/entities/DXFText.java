@@ -49,6 +49,8 @@ public class DXFText extends DXFEntity {
 
         DXFText t = new DXFText(0, null, 0, null, DXFTables.defaultThickness);
         t.setUnivers(univers);
+        t.setName(isMText ? "DXFMText" : "DXFText");
+        t.setTextrotation(0.0);
 
         t.setStartingLineNumber(br.getLineNumber());
 
