@@ -117,13 +117,13 @@ public class DXFFeatureReader implements FeatureReader {
             ftb.setSRS(srs);
 
             ftb.add("the_geom", Geometry.class);
+            ftb.add("layer", String.class);
             ftb.add("name", String.class);
             ftb.add("text", String.class);
             ftb.add("textposhorizontal", String.class);
             ftb.add("textposvertical", String.class);
             ftb.add("textheight", Double.class);
             ftb.add("textrotation", Double.class);
-            ftb.add("layer", String.class);
             ftb.add("color", String.class);
             ftb.add("linetype", String.class);
             ftb.add("thickness", Double.class);
@@ -165,13 +165,13 @@ public class DXFFeatureReader implements FeatureReader {
 
                     cache = SimpleFeatureBuilder.build(ft, new Object[]{
                                 g,
+                                entry.getRefLayerName(),
                                 entry.getName(),
                                 entry.getText(),
                                 entry.getTextposhorizontal(),
                                 entry.getTextposvertical(),
                                 entry.getTextheight(),
                                 entry.getTextrotation(),
-                                entry.getRefLayerName(),
                                 entry.getColorRGB(),
                                 entry.getLineTypeName(),
                                 new Double(entry.getThickness()),
