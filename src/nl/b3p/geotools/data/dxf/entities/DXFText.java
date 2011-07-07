@@ -25,6 +25,18 @@ public class DXFText extends DXFEntity {
 
     private Double x = null, y = null;
 
+    public DXFText(DXFText newText) {
+        this(newText.getColor(), newText.getRefLayer(), 0, newText.getLineType(), 0.0);
+
+        setStartingLineNumber(newText.getStartingLineNumber());
+        setType(newText.getType());
+        setUnivers(newText.getUnivers());
+    } 
+
+    public DXFText(int c, DXFLayer l, int visibility, DXFLineType lineType, double thickness) {
+        super(c, l , visibility, lineType, thickness);
+    }
+
     public Double getX() {
         return x;
     }
@@ -39,10 +51,6 @@ public class DXFText extends DXFEntity {
 
     public void setY(Double y) {
         this.y = y;
-    }
-
-    public DXFText(int c, DXFLayer l, int visibility, DXFLineType lineType, double thickness) {
-        super(c, l , visibility, lineType, thickness);
     }
 
     public static DXFText read(DXFLineNumberReader br, DXFUnivers univers, boolean isMText) throws IOException {
@@ -251,6 +259,7 @@ public class DXFText extends DXFEntity {
 
     @Override
     public DXFEntity clone() {
-        throw new UnsupportedOperationException();
+        return new DXFText(this);
+        //throw new UnsupportedOperationException();
     }
 }
