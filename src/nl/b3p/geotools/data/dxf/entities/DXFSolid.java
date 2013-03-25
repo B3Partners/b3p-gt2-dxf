@@ -82,6 +82,10 @@ public class DXFSolid extends DXFEntity {
                 break;
             }
 
+            Double val = null;
+            
+            /* TODO: Make option/setting for Inverting dxf solids with
+             * negative x values */
             switch (gc) {
                 case TYPE:
                     String type = cvp.getStringValue();
@@ -90,16 +94,36 @@ public class DXFSolid extends DXFEntity {
                     doLoop = false;
                     break;
                 case X_1: //"10"
-                    p1_x = cvp.getDoubleValue();
+                    val = cvp.getDoubleValue();
+                    if (val != null && val < 0) {
+                        val = Math.abs(val);
+                    }   
+                    
+                    p1_x = val;
                     break;
                 case X_2: //"11"
-                    p2_x = cvp.getDoubleValue();
+                    val = cvp.getDoubleValue();
+                    if (val != null && val < 0) {
+                        val = Math.abs(val);
+                    }   
+                    
+                    p2_x = val;
                     break;
                 case X_3: //"12"
-                    p3_x = cvp.getDoubleValue();
+                    val = cvp.getDoubleValue();
+                    if (val != null && val < 0) {
+                        val = Math.abs(val);
+                    }   
+                    
+                    p3_x = val;
                     break;
                 case X_4: //"13"
-                    p4_x = cvp.getDoubleValue();
+                    val = cvp.getDoubleValue();
+                    if (val != null && val < 0) {
+                        val = Math.abs(val);
+                    }   
+                    
+                    p4_x = val;
                     break;
                 case Y_1: //"20"
                     p1_y = cvp.getDoubleValue();
