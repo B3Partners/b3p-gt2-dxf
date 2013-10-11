@@ -81,6 +81,7 @@ public class DXFFeatureReader implements FeatureReader {
     public void updateTypeFilter(String typeName, GeometryType geometryType, String srs) {
         this.geometryType = geometryType;
         entityIterator = theUnivers.theEntities.iterator();
+        hasNext = null;
 
         try {
             createFeatureType(typeName, srs);
@@ -146,7 +147,7 @@ public class DXFFeatureReader implements FeatureReader {
 
     public SimpleFeature next() throws IOException, IllegalAttributeException, NoSuchElementException {
         if(!hasNext()) {
-            throw new NoSuchElementException();
+            throw new NoSuchElementException();            
         }
         hasNext = null;
         return cache;
