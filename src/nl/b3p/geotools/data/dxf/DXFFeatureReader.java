@@ -50,6 +50,8 @@ public class DXFFeatureReader implements FeatureReader {
     private DXFUnivers theUnivers;
     private ArrayList dxfInsertsFilter;
     private int featureID = 0;
+    
+    private Boolean hasNext = null;
 
     public DXFFeatureReader(URL url, String typeName, String srs, GeometryType geometryType, ArrayList dxfInsertsFilter) throws IOException, DXFParseException {
         CountingInputStream cis = null;
@@ -143,12 +145,20 @@ public class DXFFeatureReader implements FeatureReader {
     }
 
     public SimpleFeature next() throws IOException, IllegalAttributeException, NoSuchElementException {
+        if(!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        hasNext = null;
         return cache;
     }
 
     public boolean hasNext() throws IOException {
+        if(hasNext != null) {
+            return hasNext;
+        }
+       
         if (!entityIterator.hasNext()) {
-            return false;
+            hasNext = false;
         } else {
             Geometry g = null;
             DXFEntity entry = null;
@@ -180,16 +190,16 @@ public class DXFFeatureReader implements FeatureReader {
                                 entry.getErrorDescription()
                             }, Integer.toString(featureID++));
 
-                    return true;
+                    hasNext = true;
                 } else {
                     // No next features found
-                    return false;
+                    hasNext = false;
                 }
             } catch (IllegalAttributeException ex) {
-                log.error(ex.getLocalizedMessage() + "\n" + entry.getErrorDescription());
-                return false;
+                throw new IOException("Error accessing attribute", ex);
             }
         }
+        return hasNext;
     }
 
     /**
