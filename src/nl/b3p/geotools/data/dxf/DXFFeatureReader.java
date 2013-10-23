@@ -223,7 +223,7 @@ public class DXFFeatureReader implements FeatureReader {
 
             try {
                 // Filter invalid geometries
-                if (!entry.getGeometry().isValid()) {
+                if (entry.getGeometry() != null && !entry.getGeometry().isValid()) {
                     // Only display message for own SimpleFeatureType, otherwise it will be displayed for every typename
                     if (isEqual) {
                         log.info("Invalid " + entry.getType() + " found while parsing table");
