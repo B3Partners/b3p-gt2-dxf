@@ -9,26 +9,33 @@ import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.geotools.data.AbstractFileDataStore;
 import org.geotools.data.FeatureReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import org.geotools.data.FeatureWriter;
+import org.geotools.data.FileDataStore;
+import org.geotools.data.LockingManager;
+import org.geotools.data.Query;
 import org.geotools.data.ServiceInfo;
+import org.geotools.data.Transaction;
+import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.feature.NameImpl;
+import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.feature.type.Name;
+import org.opengis.filter.Filter;
 
 /**
  * DataStore for reading a DXF file produced by Autodesk.
- * 
- * The attributes are always the same:
- * key: String
- * name: String
- * urlLink: String
- * entryLineNumber: Integer
- * parseError: Boolean
- * error: String
- *  * 
+ *
+ * The attributes are always the same: key: String name: String urlLink: String
+ * entryLineNumber: Integer parseError: Boolean error: String *
+ *
  * @author Chris van Lith B3Partners
+ * @author mprins
  */
-public class DXFDataStore extends AbstractFileDataStore {
+public class DXFDataStore implements FileDataStore {
 
     private static final Log log = LogFactory.getLog(DXFDataStore.class);
     private URL url;
@@ -75,6 +82,11 @@ public class DXFDataStore extends AbstractFileDataStore {
         dxfInsertsFilter.add(filteredName);
     }
 
+    @Override
+    public SimpleFeatureType getSchema(Name name) throws IOException {
+        return this.getSchema(name.getLocalPart());
+    }
+
     public SimpleFeatureType getSchema(String typeName) throws IOException {
         // Update featureReader with typename and return SimpleFeatureType
         return (SimpleFeatureType) getFeatureReader(typeName).getFeatureType();
@@ -82,8 +94,8 @@ public class DXFDataStore extends AbstractFileDataStore {
 
     public SimpleFeatureType getSchema() throws IOException {
         if (typeName == null) {
-            log.warn("Typename is null, probably because of using getFeatureSource().\n" +
-                    "\tPlease use getFeatureSource(typename)");
+            log.warn("Typename is null, probably because of using getFeatureSource().\n"
+                    + "\tPlease use getFeatureSource(typename)");
         }
         return getSchema(typeName);
     }
@@ -99,6 +111,12 @@ public class DXFDataStore extends AbstractFileDataStore {
             resetFeatureReader(typeName);
         }
         return featureReader;
+    }
+
+    @Override
+    public FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(Query query, Transaction transaction) throws IOException {
+        // ignore query and transaction
+        return this.getFeatureReader();
     }
 
     public void resetFeatureReader(String typeName) throws IOException {
@@ -124,11 +142,106 @@ public class DXFDataStore extends AbstractFileDataStore {
     }
 
     @Override
+    public List<Name> getNames() throws IOException {
+        return Arrays.asList((Name) new NameImpl(getSchema().getTypeName()));
+    }
+
+    @Override
+    public SimpleFeatureSource getFeatureSource() throws IOException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public SimpleFeatureSource getFeatureSource(String typeName) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public SimpleFeatureSource getFeatureSource(Name typeName) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(Filter filter, Transaction transaction) throws IOException {
+        throw new UnsupportedOperationException("Functie niet ondersteund voor alleen-lezen databron.");
+    }
+
+    @Override
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(Transaction transaction) throws IOException {
+        throw new UnsupportedOperationException("Functie niet ondersteund voor alleen-lezen databron.");
+    }
+
+    @Override
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriterAppend(Transaction transaction) throws IOException {
+        throw new UnsupportedOperationException("Functie niet ondersteund voor alleen-lezen databron.");
+    }
+
+    @Override
+    public void updateSchema(SimpleFeatureType featureType) throws IOException {
+        throw new UnsupportedOperationException("Functie niet ondersteund voor alleen-lezen databron.");
+    }
+
+    @Override
+    public void updateSchema(String typeName, SimpleFeatureType featureType) throws IOException {
+        throw new UnsupportedOperationException("Functie niet ondersteund voor alleen-lezen databron.");
+    }
+
+    @Override
+    public void updateSchema(Name typeName, SimpleFeatureType featureType) throws IOException {
+        throw new UnsupportedOperationException("Functie niet ondersteund voor alleen-lezen databron.");
+    }
+
+    @Override
+    public void removeSchema(String typeName) throws IOException {
+        throw new UnsupportedOperationException("Functie niet ondersteund voor alleen-lezen databron.");
+    }
+
+    @Override
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(String typeName, Filter filter, Transaction transaction) throws IOException {
+        throw new UnsupportedOperationException("Functie niet ondersteund voor alleen-lezen databron.");
+    }
+
+    @Override
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriter(String typeName, Transaction transaction) throws IOException {
+        throw new UnsupportedOperationException("Functie niet ondersteund voor alleen-lezen databron.");
+    }
+
+    @Override
+    public FeatureWriter<SimpleFeatureType, SimpleFeature> getFeatureWriterAppend(String typeName, Transaction transaction) throws IOException {
+        throw new UnsupportedOperationException("Functie niet ondersteund voor alleen-lezen databron.");
+    }
+
+    @Override
+    public LockingManager getLockingManager() {
+        throw new UnsupportedOperationException("Functie niet ondersteund voor alleen-lezen databron.");
+    }
+
+    @Override
+    public void createSchema(SimpleFeatureType featureType) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void removeSchema(Name typeName) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
     public ServiceInfo getInfo() {
         try {
             return ((DXFFeatureReader) getFeatureReader()).getInfo();
         } catch (IOException ex) {
             return null;
         }
+    }
+
+    @Override
+    public void dispose() {
+        try {
+            this.featureReader.close();
+        } catch (IOException ex) {
+            // ignore
+        }
+        this.featureReader = null;
     }
 }
