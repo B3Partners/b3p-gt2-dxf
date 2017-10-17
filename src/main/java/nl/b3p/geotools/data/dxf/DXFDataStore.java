@@ -13,12 +13,15 @@ import org.geotools.data.FeatureReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.FeatureWriter;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.LockingManager;
 import org.geotools.data.Query;
 import org.geotools.data.ServiceInfo;
 import org.geotools.data.Transaction;
+import org.geotools.data.collection.CollectionFeatureSource;
+import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.NameImpl;
 import org.opengis.feature.simple.SimpleFeature;
@@ -37,24 +40,7 @@ import org.opengis.filter.Filter;
  */
 public class DXFDataStore implements FileDataStore {
 
-    private static final Log log = LogFactory.getLog(DXFDataStore.class);
-    private URL url;
-    private FeatureReader featureReader;
-    private String srs;
-    private String strippedFileName;
-    private String typeName;
-    private ArrayList dxfInsertsFilter = new ArrayList();
-
-    public DXFDataStore(URL url, String srs) throws IOException {
-        this.url = url;
-        this.strippedFileName = getURLTypeName(url);
-        this.srs = srs;
-    }
-
-    public String[] getTypeNames() throws IOException {
-        //return GeometryType.getTypeNames(strippedFileName, GeometryType.LINE, GeometryType.POINT, GeometryType.POLYGON);
-        return GeometryType.getTypeNames(strippedFileName, GeometryType.ALL);
-    }
+    private static final Log LOG = LogFactory.getLog(DXFDataStore.class);
 
     static String getURLTypeName(URL url) throws IOException {
         String file = url.getFile();
@@ -74,6 +60,24 @@ public class DXFDataStore implements FileDataStore {
         }
     }
 
+    private final URL url;
+    private FeatureReader featureReader;
+    private final String srs;
+    private final String strippedFileName;
+    public String typeName;
+    private final ArrayList dxfInsertsFilter = new ArrayList();
+
+    public DXFDataStore(URL url, String srs) throws IOException {
+        this.url = url;
+        this.strippedFileName = getURLTypeName(url);
+        this.srs = srs;
+    }
+
+    @Override
+    public String[] getTypeNames() throws IOException {
+        return GeometryType.getTypeNames(strippedFileName, GeometryType.ALL);
+    }
+
     public void addDXFInsertFilter(String[] filteredNames) {
         dxfInsertsFilter.addAll(java.util.Arrays.asList(filteredNames));
     }
@@ -87,15 +91,17 @@ public class DXFDataStore implements FileDataStore {
         return this.getSchema(name.getLocalPart());
     }
 
+    @Override
     public SimpleFeatureType getSchema(String typeName) throws IOException {
         // Update featureReader with typename and return SimpleFeatureType
         return (SimpleFeatureType) getFeatureReader(typeName).getFeatureType();
     }
 
+    @Override
     public SimpleFeatureType getSchema() throws IOException {
         if (typeName == null) {
-            log.warn("Typename is null, probably because of using getFeatureSource().\n"
-                    + "\tPlease use getFeatureSource(typename)");
+            LOG.warn("Typename is null, probably because of using getFeatureSource(). "
+                    + "Please use getFeatureSource(typename)");
         }
         return getSchema(typeName);
     }
@@ -106,6 +112,7 @@ public class DXFDataStore implements FileDataStore {
         return featureReader;
     }
 
+    @Override
     public FeatureReader getFeatureReader() throws IOException {
         if (featureReader == null) {
             resetFeatureReader(typeName);
@@ -121,7 +128,7 @@ public class DXFDataStore implements FileDataStore {
 
     public void resetFeatureReader(String typeName) throws IOException {
         if (typeName == null) {
-            log.error("No typeName given for featureReader");
+            LOG.error("No typeName given for featureReader");
         } else {
             this.typeName = typeName;
 
@@ -143,22 +150,25 @@ public class DXFDataStore implements FileDataStore {
 
     @Override
     public List<Name> getNames() throws IOException {
-        return Arrays.asList((Name) new NameImpl(getSchema().getTypeName()));
+        return Arrays.asList(new NameImpl(getSchema().getTypeName()));
     }
 
     @Override
     public SimpleFeatureSource getFeatureSource() throws IOException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return getFeatureSource(typeName);
     }
 
     @Override
     public SimpleFeatureSource getFeatureSource(String typeName) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // TODO dit is suboptimaal omdat de complete FC wordt geladen, het zou mogelijk volstaan om de eerste te paar te laden..
+        // vooral omdat er featureSource#getSchema() ed wordt gedaan
+        SimpleFeatureCollection collection = ((DXFFeatureReader) this.getFeatureReader(typeName)).getFeatureCollection();
+        return new CollectionFeatureSource(collection);
     }
 
     @Override
-    public SimpleFeatureSource getFeatureSource(Name typeName) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public SimpleFeatureSource getFeatureSource(Name name) throws IOException {
+        return getFeatureSource(name.getLocalPart());
     }
 
     @Override
@@ -231,6 +241,7 @@ public class DXFDataStore implements FileDataStore {
         try {
             return ((DXFFeatureReader) getFeatureReader()).getInfo();
         } catch (IOException ex) {
+            LOG.warn("Ophalen service info voor DXF is mislukt.", ex);
             return null;
         }
     }
@@ -239,8 +250,8 @@ public class DXFDataStore implements FileDataStore {
     public void dispose() {
         try {
             this.featureReader.close();
-        } catch (IOException ex) {
-            // ignore
+        } catch (IOException | NullPointerException ex) {
+            LOG.debug("Mogelijk probleem met sluiten van featureReader", ex);
         }
         this.featureReader = null;
     }
