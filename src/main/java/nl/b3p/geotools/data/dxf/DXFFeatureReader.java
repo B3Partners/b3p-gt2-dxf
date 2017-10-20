@@ -15,22 +15,20 @@ import java.net.URL;
 import nl.b3p.geotools.data.GeometryType;
 import nl.b3p.geotools.data.dxf.entities.DXFEntity;
 import nl.b3p.geotools.data.dxf.entities.DXFInsert;
-import nl.b3p.geotools.data.dxf.entities.DXFText;
 import nl.b3p.geotools.data.dxf.parser.DXFUnivers;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import org.geotools.data.DataSourceException;
 import org.geotools.data.FeatureReader;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.NamedIdentifier;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-
-
 import org.apache.commons.io.input.CountingInputStream;
 import org.geotools.data.DefaultServiceInfo;
 import org.geotools.data.ServiceInfo;
+import org.geotools.data.collection.ListFeatureCollection;
+import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.opengis.feature.IllegalAttributeException;
@@ -39,18 +37,19 @@ import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * @author Matthijs Laan, B3Partners
+ * @author mprins
  */
 public class DXFFeatureReader implements FeatureReader {
 
-    private static final Log log = LogFactory.getLog(DXFFeatureReader.class);
+    private static final Log LOG = LogFactory.getLog(DXFFeatureReader.class);
     private SimpleFeatureType ft;
     private Iterator<DXFEntity> entityIterator;
     private GeometryType geometryType = null;
     private SimpleFeature cache;
     private DXFUnivers theUnivers;
-    private ArrayList dxfInsertsFilter;
     private int featureID = 0;
-    
+    private ListFeatureCollection listFC;
+
     private Boolean hasNext = null;
 
     public DXFFeatureReader(URL url, String typeName, String srs, GeometryType geometryType, ArrayList dxfInsertsFilter) throws IOException, DXFParseException {
@@ -63,7 +62,7 @@ public class DXFFeatureReader implements FeatureReader {
             theUnivers = new DXFUnivers(dxfInsertsFilter);
             theUnivers.read(lnr);
         } catch (IOException ioe) {
-            log.error("Error reading data in datastore: ", ioe);
+            LOG.error("Error reading data in datastore: ", ioe);
             throw ioe;
         } finally {
             if (lnr != null) {
@@ -86,11 +85,12 @@ public class DXFFeatureReader implements FeatureReader {
         try {
             createFeatureType(typeName, srs);
         } catch (DataSourceException ex) {
-            log.error(ex.getLocalizedMessage());
+            LOG.error(ex.getLocalizedMessage());
         }
     }
 
     private void createFeatureType(String typeName, String srs) throws DataSourceException {
+        listFC = null;
         CoordinateReferenceSystem crs = null;
         try {
             crs = CRS.decode(srs);
@@ -107,11 +107,10 @@ public class DXFFeatureReader implements FeatureReader {
                     SRID = Integer.parseInt(code);
                 }
             } catch (Exception e) {
-                log.error("SRID could not be determined from crs!");
+                LOG.error("SRID could not be determined from crs!");
             }
         }
-        log.info("SRID used by SimpleFeature reader: " + SRID);
-
+        LOG.info("SRID used by SimpleFeature reader: " + SRID);
 
         try {
 
@@ -135,7 +134,7 @@ public class DXFFeatureReader implements FeatureReader {
             ftb.add("error", String.class);
 
             ft = ftb.buildFeatureType();
-        
+            LOG.debug("Created featuretype: " + ft);
         } catch (Exception e) {
             throw new DataSourceException("Error creating SimpleFeatureType: " + typeName, e);
         }
@@ -146,18 +145,18 @@ public class DXFFeatureReader implements FeatureReader {
     }
 
     public SimpleFeature next() throws IOException, IllegalAttributeException, NoSuchElementException {
-        if(!hasNext()) {
-            throw new NoSuchElementException();            
+        if (!hasNext()) {
+            throw new NoSuchElementException();
         }
         hasNext = null;
         return cache;
     }
 
     public boolean hasNext() throws IOException {
-        if(hasNext != null) {
+        if (hasNext != null) {
             return hasNext;
         }
-       
+
         if (!entityIterator.hasNext()) {
             hasNext = false;
         } else {
@@ -175,23 +174,24 @@ public class DXFFeatureReader implements FeatureReader {
                     g = entry.getGeometry();
 
                     cache = SimpleFeatureBuilder.build(ft, new Object[]{
-                                g,
-                                entry.getRefLayerName(),
-                                entry.getName(),
-                                entry.getText(),
-                                entry.getTextposhorizontal(),
-                                entry.getTextposvertical(),
-                                entry.getTextheight(),
-                                entry.getTextrotation(),
-                                entry.getColorRGB(),
-                                entry.getLineTypeName(),
-                                new Double(entry.getThickness()),
-                                new Integer(entry.isVisible() ? 1 : 0),
-                                new Integer(entry.getStartingLineNumber()),
-                                entry.getErrorDescription()
-                            }, Integer.toString(featureID++));
+                        g,
+                        entry.getRefLayerName(),
+                        entry.getName(),
+                        entry.getText(),
+                        entry.getTextposhorizontal(),
+                        entry.getTextposvertical(),
+                        entry.getTextheight(),
+                        entry.getTextrotation(),
+                        entry.getColorRGB(),
+                        entry.getLineTypeName(),
+                        entry.getThickness(),
+                        entry.isVisible() ? 1 : 0,
+                        entry.getStartingLineNumber(),
+                        entry.getErrorDescription()
+                    }, Integer.toString(featureID++));
 
                     hasNext = true;
+                    LOG.debug("Created feature: " + cache);
                 } else {
                     // No next features found
                     hasNext = false;
@@ -206,18 +206,18 @@ public class DXFFeatureReader implements FeatureReader {
     /**
      * Check if geometry of entry is equal to filterType
      *
-     * @param entry     SimpleFeature from iterator; entry to check it'serviceInfo geometryType from
-     * @return          if entry.getType equals geometryType
+     * @param entry SimpleFeature from iterator; entry to check it'serviceInfo
+     * geometryType from
+     * @return if entry.getType equals geometryType
      */
     private boolean passedFilter(DXFEntity entry) {
         // Entries who are null can never be wanted and will never pass the filter
-
         if (entry == null) {
             return false;
         } else {
             /**
-             * Check if type of geometry is equal to geometryType of filter
-             * If true, this entry should be added to the table
+             * Check if type of geometry is equal to geometryType of filter If
+             * true, this entry should be added to the table
              */
             boolean isEqual = entry.getType().equals(geometryType) || (geometryType.equals(GeometryType.ALL) && !entry.getType().equals(GeometryType.UNSUPPORTED));
 
@@ -226,7 +226,7 @@ public class DXFFeatureReader implements FeatureReader {
                 if (entry.getGeometry() != null && !entry.getGeometry().isValid()) {
                     // Only display message for own SimpleFeatureType, otherwise it will be displayed for every typename
                     if (isEqual) {
-                        log.info("Invalid " + entry.getType() + " found while parsing table");
+                        LOG.info("Invalid " + entry.getType() + " found while parsing table");
                     }
                     return false;
                 }
@@ -239,7 +239,7 @@ public class DXFFeatureReader implements FeatureReader {
                 }
 
             } catch (Exception ex) {
-                log.error("Skipping geometry; problem with " + entry.getName() + ": " + ex.getLocalizedMessage());
+                LOG.error("Skipping geometry; problem with " + entry.getName() + ": " + ex.getLocalizedMessage());
                 return false;
             }
 
@@ -256,5 +256,18 @@ public class DXFFeatureReader implements FeatureReader {
     }
 
     public void close() throws IOException {
+        listFC = null;
+    }
+
+    public SimpleFeatureCollection getFeatureCollection() throws IOException {
+        if (listFC == null || listFC.isEmpty()) {
+            LOG.debug("Creating feature collection");
+
+            listFC = new ListFeatureCollection(this.getFeatureType());
+            while (hasNext()) {
+                listFC.add(next());
+            }
+        }
+        return listFC;
     }
 }
