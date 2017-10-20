@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>nl.b3p</groupId>
     <artifactId>b3p-gt2-dxf</artifactId>
-    <version>5.0.0-SNAPSHOT</version>
+    <version>5.0.0-RC1</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceVersion>1.8</project.build.sourceVersion>
@@ -66,7 +66,8 @@
         <connection>scm:git:git@github.com:B3Partners/b3p-gt2-dxf.git</connection>
         <developerConnection>scm:git:git@github.com:B3Partners/b3p-gt2-dxf.git</developerConnection>
         <url>https://github.com/B3Partners/b3p-gt2-dxf</url>
-    </scm>
+      <tag>v5.0.0-RC1</tag>
+  </scm>
     <distributionManagement>
         <repository>
             <id>repo.b3p.nl</id>
