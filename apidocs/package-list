@@ -1,0 +1,6 @@
+nl.b3p.geotools.data
+nl.b3p.geotools.data.dxf
+nl.b3p.geotools.data.dxf.client
+nl.b3p.geotools.data.dxf.entities
+nl.b3p.geotools.data.dxf.header
+nl.b3p.geotools.data.dxf.parser
