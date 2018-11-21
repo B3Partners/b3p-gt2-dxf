@@ -73,12 +73,12 @@
         <repository>
             <id>repo.b3p.nl</id>
             <name>B3P release Repository</name>
-            <url>http://repo.b3p.nl/nexus/content/repositories/releases/</url>
+            <url>https://repo.b3p.nl/nexus/repository/releases/</url>
         </repository>
         <snapshotRepository>
             <id>repo.b3p.nl</id>
             <name>B3P snapshot Repository</name>
-            <url>http://repo.b3p.nl/nexus/content/repositories/snapshots/</url>
+            <url>https://repo.b3p.nl/nexus/repository/snapshots/</url>
         </snapshotRepository>
         <site>
             <id>gh-pages</id>
@@ -118,6 +118,28 @@
                         <goals>
                             <goal>publish-scm</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0-M2</version>
+                <executions>
+                    <execution>
+                        <id>enforce-maven</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>[3.3.9,)</version>
+                                </requireMavenVersion>
+                                <requireJavaVersion>
+                                    <version>${java.version}</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
