@@ -60,7 +60,7 @@
         <repository>
             <id>repo.b3p.nl</id>
             <name>B3P Repository</name>
-            <url>http://repo.b3p.nl/nexus/content/groups/public/</url>
+            <url>https://repo.b3p.nl/nexus/repository/public/</url>
         </repository>
     </repositories>
     <scm>
