@@ -5,9 +5,9 @@
  */
 package nl.b3p.geotools.data.dxf.entities;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.LinearRing;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.LinearRing;
 import nl.b3p.geotools.data.dxf.parser.DXFLineNumberReader;
 import java.io.EOFException;
 import java.io.IOException;
