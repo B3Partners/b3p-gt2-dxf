@@ -4,7 +4,7 @@
 package nl.b3p.geotools.data.dxf;
 
 import nl.b3p.geotools.data.dxf.parser.DXFParseException;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Iterator;
